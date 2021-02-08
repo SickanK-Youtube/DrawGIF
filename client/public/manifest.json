@@ -1,0 +1,8 @@
+{
+  "short_name": "DrawGIF",
+  "name": "DrawGIF - Draw and upload to your Minecraft server",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
