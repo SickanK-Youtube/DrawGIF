@@ -4,16 +4,13 @@ import React, {
   useState,
   useRef,
   useEffect,
-  ChangeEvent,
+  useCallback,
 } from "react";
 import ReactCrop from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import "./style.css";
-type PixelData = [number, number, number, number];
-interface Dimensions {
-  width: number;
-  height: number;
-}
+import { PixelData, Dimensions } from "./types";
+import { convertToPixelData, determineResize } from "./utils";
 
 // 1. Choose picture <- Done!
 // 2. Display picture <- Done!
@@ -24,19 +21,26 @@ interface Dimensions {
 
 function App() {
   const [imageSource, setImageSource] = useState<FileReader | null>(null);
-
-  const [dimension, setDimension] = useState<Dimensions>({
+  const [dimensions, setDimensions] = useState<Dimensions>({
+    width: 16,
+    height: 9,
+  });
+  const [currentDimensions, setCurrentDimensions] = useState<Dimensions>({
     width: 16,
     height: 9,
   });
   const [crop, setCrop] = useState<ReactCrop.Crop>({
-    aspect: dimension.width / dimension.height,
+    unit: "%",
+    aspect: dimensions.width / dimensions.height,
   });
-
-  const [completed, setCompleted] = useState<boolean>(false);
+  const [completedCrop, setCompletedCrop] = useState<ReactCrop.Crop | null>(
+    null
+  );
+  const [isCropped, setIsCropped] = useState<boolean>(false);
+  const imgRef = useRef<any>(null);
+  const canvasPreview = useRef<HTMLCanvasElement>(null);
 
   const [pixelData, setPixelData] = useState<PixelData[]>([[0, 0, 0, 0]]);
-  const canvas = useRef<HTMLCanvasElement>(null);
 
   const handleUpload = async (e: SyntheticEvent<HTMLInputElement>) => {
     let reader = new FileReader();
@@ -51,12 +55,71 @@ function App() {
     setImageSource(reader);
   };
 
+  const onLoad = useCallback((img) => {
+    imgRef.current = img;
+  }, []);
+
   useEffect(() => {
     setCrop((c) => ({
       ...c,
-      aspect: dimension.width / dimension.height,
+      aspect: dimensions.width / dimensions.height,
     }));
-  }, [dimension]);
+  }, [dimensions]);
+
+  useEffect(() => {
+    if (crop.width !== 0) {
+      setIsCropped(true);
+    } else {
+      setIsCropped(false);
+    }
+
+    if (completedCrop !== null) {
+      const c = canvasPreview.current;
+      const image = imgRef.current;
+      if (c !== null && image instanceof HTMLImageElement) {
+        const scaleX = image.naturalWidth / image.width;
+        const scaleY = image.naturalHeight / image.height;
+        c.width = crop.width as number;
+        c.height = crop.height as number;
+
+        setCurrentDimensions({
+          width: dimensions.width,
+          height: dimensions.height,
+        });
+
+        const ctx = c.getContext("2d");
+        ctx?.drawImage(
+          image,
+          (crop.x as number) * scaleX,
+          (crop.y as number) * scaleY,
+          (crop.width as number) * scaleX,
+          (crop.height as number) * scaleY,
+          0,
+          0,
+          crop.width as number,
+          crop.height as number
+        );
+
+        let data = ctx?.getImageData(
+          0,
+          0,
+          (crop.width as number) * scaleX || 1,
+          (crop.height as number) * scaleY || 1
+        );
+        console.log(data);
+        console.log(
+          determineResize(
+            {
+              width: (crop.width as number) * scaleX,
+              height: crop.height as number,
+            },
+            dimensions
+          )
+        );
+        //console.log(convertToPixelData(data?.data as Uint8ClampedArray));
+      }
+    }
+  }, [completedCrop]);
 
   return (
     <div className="App">
@@ -66,18 +129,19 @@ function App() {
           <ReactCrop
             src={imageSource.result}
             onChange={(c) => setCrop(c)}
+            onImageLoaded={onLoad}
             crop={crop}
-            onComplete={() => setCompleted((c) => !c)}
+            onComplete={(c) => setCompletedCrop(c)}
             style={{ width: "100%" }}
           />
         ) : null}
       </div>
-      <canvas style={{ width: "20px" }} ref={canvas}></canvas>
       <div>
         <input
           type="number"
+          value={dimensions.width}
           onChange={(e) =>
-            setDimension((d) => ({
+            setDimensions((d) => ({
               ...d,
               width: Math.round(parseInt(e.target.value)),
             }))
@@ -85,34 +149,24 @@ function App() {
         />
         <input
           type="number"
+          value={dimensions.height}
           onChange={(e) =>
-            setDimension((d) => ({
+            setDimensions((d) => ({
               ...d,
               height: Math.round(parseInt(e.target.value)),
             }))
           }
         />
       </div>
+      <canvas
+        ref={canvasPreview}
+        style={{
+          width: Math.round(completedCrop?.width ?? 0),
+          height: Math.round(completedCrop?.height ?? 0),
+        }}
+      ></canvas>
     </div>
   );
 }
 
 export default App;
-
-// useEffect(() => {
-//   let c = canvas.current;
-//   if (c !== null) {
-//     c.width = 1920;
-//     c.height = 1080;
-//     let ctx = c.getContext("2d");
-//     let image = new Image();
-//     image.onload = () => {
-//       ctx?.drawImage(image, 0, 0);
-//       let data = ctx?.getImageData(0, 0, 1920, 1080);
-//       console.log(data);
-//     };
-
-//     if (typeof imageSource?.result === "string")
-//       image.src = imageSource.result;
-//   }
-// }, [imageSource]);
