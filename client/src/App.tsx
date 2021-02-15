@@ -9,8 +9,9 @@ import React, {
 import ReactCrop from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import "./style.css";
-import { PixelData, Dimensions } from "./types";
+import { Dimensions, Size } from "./types";
 import { convertToPixelData, determineResize } from "./utils";
+import Jimp from "jimp";
 
 // 1. Choose picture <- Done!
 // 2. Display picture <- Done!
@@ -22,27 +23,28 @@ import { convertToPixelData, determineResize } from "./utils";
 function App() {
   const [imageSource, setImageSource] = useState<FileReader | null>(null);
   const [dimensions, setDimensions] = useState<Dimensions>({
-    width: 16,
-    height: 9,
+    width: 1,
+    height: 1,
   });
   const [currentDimensions, setCurrentDimensions] = useState<Dimensions>({
-    width: 16,
-    height: 9,
+    width: 1,
+    height: 1,
   });
   const [crop, setCrop] = useState<ReactCrop.Crop>({
-    unit: "%",
     aspect: dimensions.width / dimensions.height,
   });
   const [completedCrop, setCompletedCrop] = useState<ReactCrop.Crop | null>(
     null
   );
   const [isCropped, setIsCropped] = useState<boolean>(false);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [resizeInfo, setResizeInfo] = useState<[number, Size] | null>(null);
+  const [imageData, setImageData] = useState<ImageData | null>(null);
+
   const imgRef = useRef<any>(null);
   const canvasPreview = useRef<HTMLCanvasElement>(null);
 
-  const [pixelData, setPixelData] = useState<PixelData[]>([[0, 0, 0, 0]]);
-
-  const handleUpload = async (e: SyntheticEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: SyntheticEvent<HTMLInputElement>) => {
     let reader = new FileReader();
 
     await new Promise((resolve, reject) => {
@@ -53,6 +55,53 @@ function App() {
     });
 
     setImageSource(reader);
+  };
+
+  const handleUpload = async (e: SyntheticEvent<HTMLButtonElement>) => {
+    setIsUploading(true);
+    let c = canvasPreview?.current;
+    console.log(c?.toDataURL());
+    if (
+      c !== null &&
+      resizeInfo !== null &&
+      imageData !== null &&
+      !isUploading
+    ) {
+      if (c.toDataURL().length > 20) {
+        try {
+          let image = await Jimp.read(c.toDataURL());
+          image.resize(resizeInfo[1].width, resizeInfo[1].height);
+
+          fetch("http://localhost:4567/addImage", {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              density: resizeInfo[0],
+              width: resizeInfo[1].width,
+              height: resizeInfo[1].height,
+              widthFrames: currentDimensions.width,
+              heightFrames: currentDimensions.height,
+              pixelData: image.bitmap.data.join(","),
+            }),
+          })
+            .then((res) => res.json())
+            .then((d) => console.log(d))
+            .then(() => {
+              console.log("test");
+              setIsUploading(false);
+            })
+            .catch((e) => {
+              console.log(e);
+              setIsUploading(false);
+            });
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    }
   };
 
   const onLoad = useCallback((img) => {
@@ -106,24 +155,24 @@ function App() {
           (crop.width as number) * scaleX || 1,
           (crop.height as number) * scaleY || 1
         );
-        console.log(data);
-        console.log(
-          determineResize(
-            {
-              width: (crop.width as number) * scaleX,
-              height: crop.height as number,
-            },
-            dimensions
-          )
+        if (data !== undefined) setImageData(data);
+
+        let resize = determineResize(
+          {
+            width: (crop.width as number) * scaleX,
+            height: (crop.height as number) * scaleY,
+          },
+          dimensions
         );
-        //console.log(convertToPixelData(data?.data as Uint8ClampedArray));
+
+        setResizeInfo(resize);
       }
     }
   }, [completedCrop]);
 
   return (
     <div className="App">
-      <input type="file" onChange={handleUpload} />
+      <input type="file" onChange={handleFileUpload} />
       <div>
         {typeof imageSource?.result === "string" ? (
           <ReactCrop
@@ -161,10 +210,10 @@ function App() {
       <canvas
         ref={canvasPreview}
         style={{
-          width: Math.round(completedCrop?.width ?? 0),
-          height: Math.round(completedCrop?.height ?? 0),
+          display: "none",
         }}
       ></canvas>
+      <button onClick={handleUpload}>Upload</button>
     </div>
   );
 }

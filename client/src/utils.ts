@@ -2,7 +2,7 @@ import { monitorEventLoopDelay } from "perf_hooks";
 import ReactCrop from "react-image-crop";
 import { PixelData, Dimensions, Size, Zoom } from "./types";
 
-export function convertToPixelData(pixels: Uint8ClampedArray): PixelData[] {
+export function convertToPixelData(pixels: Buffer): PixelData[] {
     let pixelData: PixelData[] = [];
 
     let i = 0;
@@ -14,7 +14,7 @@ export function convertToPixelData(pixels: Uint8ClampedArray): PixelData[] {
     return pixelData;
 };
 
-export function determineResize(size: Size, dimensions: Dimensions){
+export function determineResize(size: Size, dimensions: Dimensions): [Zoom, Size] {
     let density: Zoom = Zoom.CLOSEST;
 
     let densityPercent = 100000;
