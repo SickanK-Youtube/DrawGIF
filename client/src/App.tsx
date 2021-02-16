@@ -13,13 +13,6 @@ import { Dimensions, Size } from "./types";
 import { convertToPixelData, determineResize } from "./utils";
 import Jimp from "jimp";
 
-// 1. Choose picture <- Done!
-// 2. Display picture <- Done!
-// 3. Choose a width and height <- Done!
-// 4. Use that width and height to crop <- Done!
-// 5. On "complete" resize and get pixel data
-// 6. On send: send the pixel data
-
 function App() {
   const [imageSource, setImageSource] = useState<FileReader | null>(null);
   const [dimensions, setDimensions] = useState<Dimensions>({
@@ -38,7 +31,6 @@ function App() {
   );
   const [isCropped, setIsCropped] = useState<boolean>(false);
   const [isUploading, setIsUploading] = useState<boolean>(false);
-  const [resizeInfo, setResizeInfo] = useState<[number, Size] | null>(null);
   const [imageData, setImageData] = useState<ImageData | null>(null);
 
   const imgRef = useRef<any>(null);
@@ -47,7 +39,7 @@ function App() {
   const handleFileUpload = async (e: SyntheticEvent<HTMLInputElement>) => {
     let reader = new FileReader();
 
-    await new Promise((resolve, reject) => {
+    await new Promise((resolve, _) => {
       reader.readAsDataURL(
         ((e?.target as HTMLInputElement).files as FileList)[0]
       );
@@ -60,17 +52,14 @@ function App() {
   const handleUpload = async (e: SyntheticEvent<HTMLButtonElement>) => {
     setIsUploading(true);
     let c = canvasPreview?.current;
-    console.log(c?.toDataURL());
-    if (
-      c !== null &&
-      resizeInfo !== null &&
-      imageData !== null &&
-      !isUploading
-    ) {
+    let resize = determineResize(dimensions);
+    if (c !== null && imageData !== null && !isUploading) {
       if (c.toDataURL().length > 20) {
         try {
           let image = await Jimp.read(c.toDataURL());
-          image.resize(resizeInfo[1].width, resizeInfo[1].height);
+          image.resize(resize.width, resize.height);
+          console.log(image.bitmap.data.length / 4);
+          console.log(resize);
 
           fetch("http://localhost:4567/addImage", {
             method: "POST",
@@ -79,9 +68,8 @@ function App() {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              density: resizeInfo[0],
-              width: resizeInfo[1].width,
-              height: resizeInfo[1].height,
+              width: resize.width,
+              height: resize.height,
               widthFrames: currentDimensions.width,
               heightFrames: currentDimensions.height,
               pixelData: image.bitmap.data.join(","),
@@ -156,16 +144,6 @@ function App() {
           (crop.height as number) * scaleY || 1
         );
         if (data !== undefined) setImageData(data);
-
-        let resize = determineResize(
-          {
-            width: (crop.width as number) * scaleX,
-            height: (crop.height as number) * scaleY,
-          },
-          dimensions
-        );
-
-        setResizeInfo(resize);
       }
     }
   }, [completedCrop]);

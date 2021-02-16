@@ -6,11 +6,3 @@ export interface Dimensions {
 };
 
 export interface Size extends Dimensions {};
-
-export enum Zoom {
-    CLOSEST = 128,
-    CLOSE =  256,
-    NORMAL = 512,
-    FAR = 1024,
-    FARTHEST = 2048,
-};
