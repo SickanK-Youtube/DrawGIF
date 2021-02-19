@@ -1,5 +1,9 @@
-DrawGIF$ImageResponse.class
-DrawGIF$Status.class
+JavaBeans.class
+JavaBeans$ImageInfo.class
 DrawGIF.class
+JsonTypes$ImageResponse.class
+JsonTypes.class
+JsonTypes$Status.class
 AddImageTask.class
-AddImageTask$1.class
+JavaBeans$ImagePosition.class
+Routes.class

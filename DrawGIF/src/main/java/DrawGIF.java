@@ -1,69 +1,41 @@
-import com.google.gson.Gson;
 import org.bukkit.plugin.java.JavaPlugin;
-import spark.Spark;
+
+import java.io.File;
+import java.io.IOException;
 
 public class DrawGIF extends JavaPlugin {
+    public static final String MAPS_YML = "maps.yml";
+    public static final String IMAGE_FOLDER = "images";
+    public static final String DATA_FOLDER = "plugins/DrawGIF/";
+    public static final int CONFIG_VERSION = 1;
 
-    public class Status {
-        int status;
-        String message;
-
-        public Status(int status, String message) {
-            this.status = status;
-            this.message = message;
-        }
-    }
-
-    public class ImageResponse {
-        String pixelData;
-        int width;
-        int height;
-        int widthFrames;
-        int heightFrames;
-
-        public ImageResponse(String pixelData, int density, int width, int height, int widthFrames, int heightFrames) {
-            this.pixelData = pixelData;
-            this.width = width;
-            this.height = height;
-            this.widthFrames = widthFrames;
-            this.heightFrames = heightFrames;
-        }
-    }
+    // get request
+    // make all frames and assign to maps
+    // save all frames in an yaml file
+    // Give player one "magic" frame (Complete picture?) and make it place the whole thing when placed in an item frame
+    // On remove give back the original picture
 
     @Override
     public void onEnable() {
-        Gson gson = new Gson();
-        Spark.post("/addImage", (req, res) -> {
-            ImageResponse data = gson.fromJson(req.body(), ImageResponse.class);
-            new AddImageTask(data).runTaskAsynchronously(this);
+        getDataFolder().mkdir();
+        File mapsConfig = new File(DATA_FOLDER, "maps.yml");
+        File imageFolder = new File(DATA_FOLDER, "images");
 
-            System.out.println("Sent");
-            Status status = new Status(200, "Image added");
-            return gson.toJson(status);
-        });
-
-        Spark.options("/*",
-                        (request, response) -> {
-
-            String accessControlRequestHeaders = request
-                    .headers("Access-Control-Request-Headers");
-            if (accessControlRequestHeaders != null) {
-                response.header("Access-Control-Allow-Headers",
-                        accessControlRequestHeaders);
+        try {
+            if(mapsConfig.createNewFile()){
+               // add default config
             }
 
-            String accessControlRequestMethod = request
-                    .headers("Access-Control-Request-Method");
-            if (accessControlRequestMethod != null) {
-                response.header("Access-Control-Allow-Methods",
-                        accessControlRequestMethod);
+            if(imageFolder.mkdir()){
+                // add default config
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-            Status status = new Status(200, "OK");
-            return gson.toJson(status);
-        });
-
-        Spark.before((request, response) -> response.header("Access-Control-Allow-Origin", "*"));
+        Routes routes = new Routes();
+        routes.AddImage(this);
+        routes.HandleOptions();
     }
 }
 
