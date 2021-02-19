@@ -2,3 +2,28 @@ name: DrawGIF
 main: DrawGIF
 version: 1.0
 api-version: 1.16
+commands:
+  drawgif:
+    description: Get a GIF or Image by name.
+    usage: |
+      /drawgif get [name] - Get the root map of an Image or GIF
+      /drawgif list - Get a list of all Images and GIFs available
+      /drawgif key - Get the secret
+      /drawgif newKey - Generate a new secret
+    permission-message: You don't have permission to use this command
+permissions:
+  drawgif.*:
+    default: not-op
+    children:
+      drawgif.get: true
+      drawgif.list: true
+      drawgif.key: false
+      drawgif.newKey: false
+  drawgif.get:
+    default: not-op
+  drawgif.list:
+    default: not-op
+  drawgif.key:
+   default: op
+  drawgif.newKey:
+   default: op

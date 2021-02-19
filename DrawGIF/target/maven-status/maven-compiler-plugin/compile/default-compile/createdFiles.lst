@@ -1,9 +1,10 @@
-JavaBeans.class
-JavaBeans$ImageInfo.class
+ConfigTypes$ImageInfo.class
+Commands.class
 DrawGIF.class
+ConfigTypes$ImagePosition.class
 JsonTypes$ImageResponse.class
 JsonTypes.class
+ConfigTypes.class
 JsonTypes$Status.class
 AddImageTask.class
-JavaBeans$ImagePosition.class
 Routes.class

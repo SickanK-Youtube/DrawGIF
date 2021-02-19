@@ -1,32 +1,15 @@
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.map.MapView;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.graalvm.compiler.core.common.type.ArithmeticOpTable;
-import org.yaml.snakeyaml.Yaml;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
-// Config structure
-// maps:
-//   id:
-//     name,
-//     width,
-//     height,
-//     images: [
-//              filename:
-//                  x,
-//                  y,
-//             ]
 
 public class AddImageTask extends BukkitRunnable {
     JsonTypes.ImageResponse data;
@@ -39,8 +22,9 @@ public class AddImageTask extends BukkitRunnable {
     public void run() {
         int arraySize = data.widthFrames*data.heightFrames;
         int currentIndex = 0;
-        HashMap<String, JavaBeans.ImagePosition>[] imagePieces = new HashMap[arraySize];
+        HashMap<String, Object>[] imagePieces = new HashMap[arraySize];
 
+        // Create all maps
         for (int wf = 0; wf < data.widthFrames; wf++) {
             for (int hf = 0; hf < data.heightFrames; hf++) {
                 int[] pixels = stringArrayToIntArray(data.pixelData.split(","));
@@ -52,11 +36,9 @@ public class AddImageTask extends BukkitRunnable {
                 try {
                     ImageIO.write(image, "jpg", imageFile);
 
-                    JavaBeans.ImagePosition position = new JavaBeans.ImagePosition();
-                    position.setX(wf);
-                    position.setY(hf);
+                    Object position = new ConfigTypes.ImagePosition(wf, hf).serialize();
 
-                    HashMap<String, JavaBeans.ImagePosition> imagePiece = new HashMap();
+                    HashMap<String, Object> imagePiece = new HashMap();
                     imagePiece.put(filename, position);
                     imagePieces[currentIndex] = imagePiece;
 
@@ -68,32 +50,39 @@ public class AddImageTask extends BukkitRunnable {
             }
         }
 
+        // Add maps to configuration file
         MapView map = Bukkit.createMap(Bukkit.getWorlds().get(0));
-
-        JavaBeans.ImageInfo imageInfo = new JavaBeans.ImageInfo();
-        imageInfo.setName(data.name);
-        imageInfo.setWidth(data.widthFrames);
-        imageInfo.setHeight(data.heightFrames);
-        imageInfo.setX(0);
-        imageInfo.setY(0);
-        imageInfo.setImagePieces(imagePieces);
-
-
+        Object imageInfo = new ConfigTypes.ImageInfo(map.getId(), data.name, data.widthFrames, data.heightFrames, 0, 0, imagePieces).serialize();
         YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(DrawGIF.DATA_FOLDER + DrawGIF.MAPS_YML));;
-        config.set("version", DrawGIF.CONFIG_VERSION);
 
-        ConfigurationSection section = config.getConfigurationSection("maps");
-        if(section != null){
-            Map<String, Object> maps = section.getValues(false);
+        ConfigurationSection mapsSection = config.getConfigurationSection("maps");
+        if(mapsSection != null){
+            Map<String, Object> maps = mapsSection.getValues(false);
             maps.put(data.id, imageInfo);
             config.set("maps", maps);
-            System.out.println("Yes exist");
 
         } else {
-            Map <String, JavaBeans.ImageInfo> imageData = new HashMap();
+            Map <String, Object> imageData = new HashMap();
             imageData.put(data.id, imageInfo);
             config.set("maps", imageData);
-            System.out.println("No exist");
+        }
+
+        ConfigurationSection mapReferenceSection = config.getConfigurationSection("reference");
+        if(mapReferenceSection != null){
+            Map<String, Object> list = mapReferenceSection.getValues(true);
+
+            Map <String, String> mapReference= new HashMap();
+            list.forEach((id, name) -> {
+                mapReference.put(id, name.toString());
+            });
+            mapReference.put(data.id, data.name);
+
+            config.set("reference", mapReference);
+
+        } else {
+            Map <String, String> mapReference= new HashMap();
+            mapReference.put(data.id, data.name);
+            config.set("reference", mapReference);
         }
 
         try {
