@@ -1,10 +1,14 @@
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -24,6 +28,11 @@ public class DrawGIF extends JavaPlugin {
     // - Get and list maps (Command)
     // - Automatic placement
     // - GIFs
+    static {
+        ConfigurationSerialization.registerClass(ImageInfo.class);
+        ConfigurationSerialization.registerClass(ImagePiece.class);
+    }
+
 
     @Override
     public void onEnable() {
@@ -35,7 +44,8 @@ public class DrawGIF extends JavaPlugin {
             if(mapsConfig.createNewFile()){
                 YamlConfiguration config = YamlConfiguration.loadConfiguration(mapsConfig);
                 config.set("version", CONFIG_VERSION);
-                config.set("maps", new HashMap<String, ConfigTypes.ImageInfo>());
+                config.set("maps", new HashMap<String, ImageInfo>());
+                config.set("pieces", new HashMap<String, ImagePiece>());
                 config.save(mapsConfig);
             }
 
@@ -47,11 +57,12 @@ public class DrawGIF extends JavaPlugin {
         RouteHandler routeHandler = new RouteHandler();
         routeHandler.AddImage(this);
         routeHandler.HandleOptions();
+
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        CommandHandler commandHandler = new CommandHandler(sender, command, label, args);
+        CommandHandler commandHandler = new CommandHandler(sender, command, label, args, this);
         if(command.getName().equalsIgnoreCase("drawgif")){
             switch (args[0].toLowerCase(Locale.ROOT)){
                 case "get":
