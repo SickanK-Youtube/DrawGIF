@@ -4,6 +4,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.event.Listener;
+import org.bukkit.map.MapRenderer;
+import org.bukkit.map.MapView;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -46,6 +48,7 @@ public class DrawGIF extends JavaPlugin {
                 config.set("version", CONFIG_VERSION);
                 config.set("maps", new HashMap<String, ImageInfo>());
                 config.set("pieces", new HashMap<String, ImagePiece>());
+                config.set("reference", new HashMap<String, String>());
                 config.save(mapsConfig);
             }
 
@@ -57,6 +60,22 @@ public class DrawGIF extends JavaPlugin {
         RouteHandler routeHandler = new RouteHandler();
         routeHandler.AddImage(this);
         routeHandler.HandleOptions();
+
+        MapConfigHandler configHandler = new MapConfigHandler(new File(DrawGIF.DATA_FOLDER, DrawGIF.MAPS_YML));
+        ImagePiece[] imagePieces = configHandler.getAllImagePieces();
+
+        for (ImagePiece image : imagePieces) {
+            @SuppressWarnings("deprecation")
+            MapView mapView = Bukkit.getMap(image.mapViewId);
+
+            for (MapRenderer mr : mapView.getRenderers()) {
+                mapView.removeRenderer(mr);
+            }
+
+            File imageFile = new File(DrawGIF.DATA_FOLDER + DrawGIF.IMAGE_FOLDER,
+                    image.filename);
+            mapView.addRenderer(new ImageMapRenderer(imageFile));
+        }
 
     }
 

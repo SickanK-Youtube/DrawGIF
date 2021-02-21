@@ -1,5 +1,6 @@
 MagicMapHandler$1.class
 JsonTypes$ImageResponse.class
+ImageMapRenderer.class
 ConfigTypes.class
 JsonTypes$Status.class
 AddImageTask.class
@@ -10,4 +11,5 @@ DrawGIF.class
 JsonTypes.class
 MagicMapHandler.class
 ImagePiece.class
+MapConfigHandler.class
 RouteHandler.class

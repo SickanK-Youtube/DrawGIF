@@ -8,9 +8,7 @@ import org.bukkit.event.Listener;
 import java.awt.*;
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class CommandHandler {
     CommandSender sender;
@@ -28,65 +26,67 @@ public class CommandHandler {
     }
 
     public void get() {
+        MapConfigHandler configHandler = new MapConfigHandler(new File(DrawGIF.DATA_FOLDER, DrawGIF.MAPS_YML));
+
+        if (args.length < 2) {
+            sender.sendMessage("You must supply an Image!\n/drawgif get [image]");
+            return;
+        }
+
+        Map[] matchingReferences = configHandler.getReference(args[1]);
+
+        if(matchingReferences == null || matchingReferences.length == 0){
+            sender.sendMessage("There seems to be an error... Have you supplied the correct Image?");
+            return;
+        }
+
+        System.out.println(matchingReferences[0]);
+        ImageInfo image = configHandler.getImageInfo((String) matchingReferences[0].get("id"));
+
+        if(image == null){
+            sender.sendMessage("There seems to be an error. (47)");
+            return;
+        }
+
+        ImagePiece[] imagePieces = configHandler.getImagePieces(image);
+
+        if(imagePieces == null){
+            sender.sendMessage("There seems to be an error... Have you supplied the correct Image?");
+            return;
+        }
+
+        MagicMapHandler magicMap = new MagicMapHandler(image, imagePieces);
+        Bukkit.getPluginManager().registerEvents(magicMap, drawGIF);
+    }
+
+    public void remove() {
+        System.out.println("remove");
+    }
+
+    public void list() {
         YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(DrawGIF.DATA_FOLDER, DrawGIF.MAPS_YML));
 
         ConfigurationSection mapSection = config.getConfigurationSection("maps");
         if (mapSection != null) {
             mapSection.getValues(false).forEach((id, img) -> {
                 ImageInfo image = (ImageInfo) img;
-
-                ConfigurationSection pieceSection = config.getConfigurationSection("pieces");
-                if (pieceSection != null) {
-                    for (Object piece : Arrays.stream(image.imagePieces).toArray()) {
-                        ImagePiece[] imagePieces = new ImagePiece[image.height * image.width];
-                        String strPiece = piece.toString();
-                        Set<String> keys = pieceSection.getKeys(false);
-
-                        int index = 0;
-                        for (String key : keys) {
-                            imagePieces[index] = (ImagePiece) pieceSection.get(key);
-                            index += 1;
-                        }
-
-                        System.out.println(image.toString());
-                        MagicMapHandler magicMap = new MagicMapHandler(image, imagePieces);
-                        Bukkit.getPluginManager().registerEvents(magicMap, drawGIF);
-                    }
-                }
+                sender.sendMessage(image.name + " (" + image.width + "x" + image.height + ")");
             });
-            } else {
-                    sender.sendMessage("There doesn't seem to be any images uploaded...");
-                }
-            }
 
-            public void remove () {
-                System.out.println("remove");
-            }
-
-            public void list () {
-                YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(DrawGIF.DATA_FOLDER, DrawGIF.MAPS_YML));
-
-                ConfigurationSection mapSection = config.getConfigurationSection("maps");
-                if (mapSection != null) {
-                    mapSection.getValues(false).forEach((id, img) -> {
-                        ImageInfo image = (ImageInfo) img;
-                        sender.sendMessage(image.name + " (" + image.width + "x" + image.height + ")");
-                    });
-
-                } else {
-                    sender.sendMessage("There doesn't seem to be any images uploaded...");
-                }
-            }
-
-            public void key () {
-                System.out.println("key");
-            }
-
-            public void newKey () {
-                System.out.println("newKey");
-            }
-
-            public void help () {
-                System.out.println("help");
-            }
+        } else {
+            sender.sendMessage("There doesn't seem to be any images uploaded...");
         }
+    }
+
+    public void key() {
+        System.out.println("key");
+    }
+
+    public void newKey() {
+        System.out.println("newKey");
+    }
+
+    public void help() {
+        System.out.println("help");
+    }
+}

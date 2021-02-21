@@ -39,6 +39,7 @@ public class AddImageTask extends BukkitRunnable {
                 try {
                     ImageIO.write(image, "jpg", imageFile);
                     MapView mapView = Bukkit.createMap(Bukkit.getWorlds().get(0));
+                    mapView.addRenderer(new ImageMapRenderer(imageFile));
 
                     String name = data.id + "_" + wf + hf;
                     imagePieces.put(name, new ImagePiece(mapView.getId(), filename, wf, hf));
