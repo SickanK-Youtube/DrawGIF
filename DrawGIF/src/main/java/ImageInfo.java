@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ImageInfo implements ConfigurationSerializable {
+    String id;
     String name;
     int width;
     int height;
@@ -12,6 +13,7 @@ public class ImageInfo implements ConfigurationSerializable {
     String[] imagePieces;
 
     public ImageInfo(
+            String id,
             String name,
             int width,
             int height,
@@ -19,6 +21,7 @@ public class ImageInfo implements ConfigurationSerializable {
             int y,
             String[] imagePieces
     ) {
+        this.id = id;
         this.name = name;
         this.width = width;
         this.height = height;
@@ -28,6 +31,7 @@ public class ImageInfo implements ConfigurationSerializable {
     }
 
     public ImageInfo(Map<?, ?> map) {
+        this.id = map.get("id").toString();
         this.name = map.get("name").toString();
         this.width = (Integer) map.get("width");
         this.height = (Integer) map.get("height");
@@ -45,6 +49,9 @@ public class ImageInfo implements ConfigurationSerializable {
         this.imagePieces =  imagePieces;
     }
 
+    public String getId() {
+        return id;
+    }
     public String getFilename() {
         return name;
     }
@@ -72,7 +79,8 @@ public class ImageInfo implements ConfigurationSerializable {
 
     @Override
     public Map<String, Object> serialize() {
-        Map<String, Object> m = new HashMap();
+        Map<String, Object> m = new HashMap<>();
+        m.put("id", id);
         m.put("name", name);
         m.put("width", width);
         m.put("height", height);

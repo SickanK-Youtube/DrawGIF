@@ -7,12 +7,14 @@ import org.bukkit.event.Listener;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Vector;
 
 public class DrawGIF extends JavaPlugin {
     public static final String MAPS_YML = "maps.yml";
@@ -43,7 +45,7 @@ public class DrawGIF extends JavaPlugin {
         File imageFolder = new File(DATA_FOLDER, IMAGE_FOLDER);
 
         try {
-            if(mapsConfig.createNewFile()){
+            if (mapsConfig.createNewFile()) {
                 YamlConfiguration config = YamlConfiguration.loadConfiguration(mapsConfig);
                 config.set("version", CONFIG_VERSION);
                 config.set("maps", new HashMap<String, ImageInfo>());
@@ -62,28 +64,46 @@ public class DrawGIF extends JavaPlugin {
         routeHandler.HandleOptions();
 
         MapConfigHandler configHandler = new MapConfigHandler(new File(DrawGIF.DATA_FOLDER, DrawGIF.MAPS_YML));
-        ImagePiece[] imagePieces = configHandler.getAllImagePieces();
 
-        for (ImagePiece image : imagePieces) {
-            @SuppressWarnings("deprecation")
-            MapView mapView = Bukkit.getMap(image.mapViewId);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                ImagePiece[] imagePieces = configHandler.getAllImagePieces();
+                for (ImagePiece image : imagePieces) {
+                    @SuppressWarnings("deprecation")
+                    MapView mapView = Bukkit.getMap(image.mapViewId);
+                    if (mapView != null) {
+                        for (MapRenderer mr : mapView.getRenderers()) {
+                            mapView.removeRenderer(mr);
+                        }
 
-            for (MapRenderer mr : mapView.getRenderers()) {
-                mapView.removeRenderer(mr);
+                        File imageFile = new File(DrawGIF.DATA_FOLDER + DrawGIF.IMAGE_FOLDER,
+                                image.filename);
+                        mapView.addRenderer(new ImageMapRenderer(imageFile));
+                    }
+                }
             }
+        }.runTaskAsynchronously(this);
 
-            File imageFile = new File(DrawGIF.DATA_FOLDER + DrawGIF.IMAGE_FOLDER,
-                    image.filename);
-            mapView.addRenderer(new ImageMapRenderer(imageFile));
-        }
 
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                ImageInfo[] imageInfos = configHandler.getAllImageInfo();
+                for (ImageInfo image : imageInfos) {
+                    ImagePiece[] localImagePiece = configHandler.getImagePieces(image);
+                    MagicMapHandler magicMap = new MagicMapHandler(image, localImagePiece, null);
+                    Bukkit.getPluginManager().registerEvents(magicMap, DrawGIF.getPlugin(DrawGIF.class));
+                }
+            }
+        }.runTaskAsynchronously(this);
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        CommandHandler commandHandler = new CommandHandler(sender, command, label, args, this);
-        if(command.getName().equalsIgnoreCase("drawgif")){
-            switch (args[0].toLowerCase(Locale.ROOT)){
+        CommandHandler commandHandler = new CommandHandler(sender, command, label, args);
+        if (command.getName().equalsIgnoreCase("drawgif")) {
+            switch (args[0].toLowerCase(Locale.ROOT)) {
                 case "get":
                     commandHandler.get();
                     return true;

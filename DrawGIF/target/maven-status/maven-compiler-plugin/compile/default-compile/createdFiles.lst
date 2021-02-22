@@ -3,6 +3,7 @@ JsonTypes$ImageResponse.class
 ImageMapRenderer.class
 ConfigTypes.class
 JsonTypes$Status.class
+DrawGIF$1.class
 AddImageTask.class
 ConfigTypes$MapPiece.class
 ImageInfo.class
@@ -10,6 +11,7 @@ CommandHandler.class
 DrawGIF.class
 JsonTypes.class
 MagicMapHandler.class
+DrawGIF$2.class
 ImagePiece.class
 MapConfigHandler.class
 RouteHandler.class

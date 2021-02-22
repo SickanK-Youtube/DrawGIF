@@ -1,45 +1,54 @@
-
-// Create map, enchanted :)
-// When that map is placed it will automatically place maps in all itemframes present
-// When ANY of the maps are removed everything will come down together and you'll receive the original map
-
-
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.Rotation;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.type.Wall;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.MapMeta;
+import org.bukkit.persistence.PersistentDataType;
 
+import java.util.Objects;
 import java.util.Vector;
 
 public class MagicMapHandler implements Listener {
     ImageInfo imageInfo;
     ImagePiece[] imagePieces;
+    Player player;
+    ItemStack map = null;
+    NamespacedKey key;
     Vector<ConfigTypes.MapPiece> maps;
 
-    public MagicMapHandler(ImageInfo imageInfo, ImagePiece[] imagePieces) {
+    public MagicMapHandler(ImageInfo imageInfo, ImagePiece[] imagePieces, Player player) {
         this.imageInfo = imageInfo;
         this.imagePieces = imagePieces;
+        this.player = player;
+        this.key = new NamespacedKey(DrawGIF.getPlugin(DrawGIF.class), "id");
         if (imageInfo != null && imagePieces != null) {
             this.maps = this.createMaps();
         }
     }
 
     private Vector<ConfigTypes.MapPiece> createMaps() {
-        ItemStack m = new ItemStack(Material.FILLED_MAP);
-        MapMeta meta = (MapMeta) m.getItemMeta();
-        Vector<ConfigTypes.MapPiece> maps = new Vector();
+        if(player != null) {
+            ItemStack m = new ItemStack(Material.MAP);
+            m.addUnsafeEnchantment(Enchantment.LOYALTY, 1);
+            m.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+
+            ItemMeta meta = m.getItemMeta();
+            meta.getPersistentDataContainer().set(this.key, PersistentDataType.STRING, imageInfo.id);
+            meta.setDisplayName("Magic \"" + imageInfo.name + "\" Map");
+            m.setItemMeta(meta);
+            this.map = m;
+            player.getInventory().addItem(m);
+        }
+
+        Vector<ConfigTypes.MapPiece> maps = new Vector<>();
 
         try {
             for (ImagePiece image : imagePieces) {
@@ -74,19 +83,19 @@ public class MagicMapHandler implements Listener {
             if (heightDirection != null && widthDirection != null) {
                 switch (heightDirection) {
                     case NORTH:
-                        z -= this.imageInfo.height - map.y;
+                        z -= this.imageInfo.height - map.y - 1;
                         break;
                     case SOUTH:
-                        z += this.imageInfo.height - map.y;
+                        z += this.imageInfo.height - map.y - 1;
                         break;
                     case WEST:
-                        x -= this.imageInfo.height - map.y;
+                        x -= this.imageInfo.height - map.y - 1;
                         break;
                     case EAST:
-                        x += this.imageInfo.height - map.y;
+                        x += this.imageInfo.height - map.y - 1;
                         break;
                     case UP:
-                        y += this.imageInfo.height - map.y;
+                        y += this.imageInfo.height - map.y - 1;
                         break;
                     default:
                         break;
@@ -146,31 +155,40 @@ public class MagicMapHandler implements Listener {
                     frame.setRotation(facingToRotation(heightDirection, widthDirection));
                     frame.setItem(m);
                 } catch (IllegalArgumentException e) {
-                    System.out.println(newLocation.toString());
                 }
-
             }
         }
-
     }
-
-    /*
-        west= +x
-        east= -x
-        south= +z
-        north= -z
-     */
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        placeMaps(event.getBlockFace(), event.getPlayer(), event.getClickedBlock().getLocation());
+        Block clickedBlock = event.getClickedBlock();
+
+        ItemStack mainHand = event.getPlayer().getInventory().getItemInMainHand();
+        String mainHandId = mainHand.getItemMeta() == null ? null : mainHand.getItemMeta().getPersistentDataContainer().get(this.key, PersistentDataType.STRING);
+        ItemStack offHand = event.getPlayer().getInventory().getItemInOffHand();
+        String offHandId = offHand.getItemMeta() == null ? null : offHand.getItemMeta().getPersistentDataContainer().get(this.key, PersistentDataType.STRING);
+
+        if (clickedBlock != null && (Objects.equals(mainHandId, imageInfo.id) || Objects.equals(offHandId, imageInfo.id))) {
+            event.setCancelled(true);
+
+            if(Objects.equals(mainHandId, imageInfo.id)) {
+                mainHand.setAmount(mainHand.getAmount()-1);
+            }
+
+            if(Objects.equals(offHandId, imageInfo.id)) {
+                offHand.setAmount(offHand.getAmount()-1);
+            }
+
+            placeMaps(event.getBlockFace(), event.getPlayer(), clickedBlock.getLocation());
+        }
     }
 
     private static Rotation facingToRotation(BlockFace heightDirection, BlockFace widthDirection) {
         switch (heightDirection) {
             case NORTH:
             case SOUTH:
-                return widthDirection == BlockFace.WEST ?  Rotation.NONE : Rotation.CLOCKWISE;
+                return widthDirection == BlockFace.WEST ? Rotation.NONE : Rotation.CLOCKWISE;
             case WEST:
                 return Rotation.CLOCKWISE_135;
             case EAST:

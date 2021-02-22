@@ -1,3 +1,5 @@
+// Fix duplicate error yaml
+
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -5,13 +7,11 @@ import org.bukkit.map.MapView;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class AddImageTask extends BukkitRunnable {
     JsonTypes.ImageResponse data;
@@ -54,7 +54,7 @@ public class AddImageTask extends BukkitRunnable {
         }
 
         // Add maps to configuration file
-        ImageInfo imageInfo = new ImageInfo(data.name, data.widthFrames, data.heightFrames, 0, 0, imagePieceNames);
+        ImageInfo imageInfo = new ImageInfo(data.id, data.name, data.widthFrames, data.heightFrames, 0, 0, imagePieceNames);
         YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(DrawGIF.DATA_FOLDER + DrawGIF.MAPS_YML));
 
         ConfigurationSection mapsSection = config.getConfigurationSection("maps");
@@ -64,7 +64,7 @@ public class AddImageTask extends BukkitRunnable {
             config.set("maps", maps);
 
         } else {
-            Map<String, ImageInfo> imageData = new HashMap();
+            Map<String, ImageInfo> imageData = new HashMap<>();
             imageData.put(data.id, imageInfo);
             config.set("maps", imageData);
         }
@@ -85,7 +85,7 @@ public class AddImageTask extends BukkitRunnable {
         if (mapReferenceSection != null) {
             Map<String, Object> list = mapReferenceSection.getValues(false);
 
-            Map<String, String> mapReference = new HashMap();
+            Map<String, String> mapReference = new HashMap<>();
             list.forEach((name, id) -> {
                 mapReference.put(name, id.toString());
             });
@@ -94,7 +94,7 @@ public class AddImageTask extends BukkitRunnable {
             config.set("reference", mapReference);
 
         } else {
-            Map<String, String> mapReference = new HashMap();
+            Map<String, String> mapReference = new HashMap<>();
             mapReference.put(data.name, data.id);
             config.set("reference", mapReference);
         }

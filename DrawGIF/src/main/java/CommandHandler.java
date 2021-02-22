@@ -3,11 +3,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.event.Listener;
 
-import java.awt.*;
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.*;
 
 public class CommandHandler {
@@ -15,14 +12,12 @@ public class CommandHandler {
     Command command;
     String label;
     String[] args;
-    DrawGIF drawGIF;
 
-    public CommandHandler(CommandSender sender, Command command, String label, String[] args, DrawGIF drawGIF) {
+    public CommandHandler(CommandSender sender, Command command, String label, String[] args) {
         this.sender = sender;
         this.command = command;
         this.label = label;
         this.args = args;
-        this.drawGIF = drawGIF;
     }
 
     public void get() {
@@ -55,8 +50,8 @@ public class CommandHandler {
             return;
         }
 
-        MagicMapHandler magicMap = new MagicMapHandler(image, imagePieces);
-        Bukkit.getPluginManager().registerEvents(magicMap, drawGIF);
+        MagicMapHandler magicMap = new MagicMapHandler(image, imagePieces, sender.getServer().getPlayer(sender.getName()));
+        Bukkit.getPluginManager().registerEvents(magicMap, DrawGIF.getPlugin(DrawGIF.class));
     }
 
     public void remove() {

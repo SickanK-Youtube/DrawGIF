@@ -21,6 +21,21 @@ public class MapConfigHandler {
         return (ImageInfo) mapSection.get(id);
     }
 
+    public ImageInfo[] getAllImageInfo() {
+        ConfigurationSection mapSection = config.getConfigurationSection("maps");
+        if (mapSection == null) {
+            return null;
+        }
+
+        Vector<ImageInfo> imageInfos = new Vector<>();
+
+        for(String key : mapSection.getKeys(false)){
+            imageInfos.add((ImageInfo) mapSection.get(key));
+        };
+
+        return imageInfos.toArray(new ImageInfo[0]);
+    }
+
     public ImagePiece[] getImagePieces(ImageInfo imageInfo) {
         ConfigurationSection pieceSection = this.config.getConfigurationSection("pieces");
 
@@ -29,10 +44,9 @@ public class MapConfigHandler {
         }
 
         ImagePiece[] imagePieces = new ImagePiece[imageInfo.height * imageInfo.width];
-        Set<String> keys = pieceSection.getKeys(false);
 
         int index = 0;
-        for (String key : keys) {
+        for (String key : imageInfo.imagePieces) {
             imagePieces[index] = (ImagePiece) pieceSection.get(key);
             index += 1;
         }

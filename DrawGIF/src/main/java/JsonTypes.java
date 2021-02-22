@@ -1,5 +1,5 @@
 public class JsonTypes {
-    public class ImageResponse {
+    public static class ImageResponse {
         String pixelData;
         String name;
         String id;
