@@ -45,6 +45,7 @@ function ImageUpload({
               widthFrames: currentDimensions.width,
               heightFrames: currentDimensions.height,
               pixelData: image.bitmap.data.join(","),
+              type: "IMAGE",
             }),
           })
             .then((res) => res.json())
