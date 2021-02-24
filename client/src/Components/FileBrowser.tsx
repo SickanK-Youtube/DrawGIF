@@ -1,10 +1,10 @@
 import React from "react";
 
 interface Props {
-  setImageSource: React.Dispatch<React.SetStateAction<FileReader | null>>;
+  setImage: React.Dispatch<React.SetStateAction<string>>;
 }
 
-function FileBrowser({ setImageSource }: Props) {
+function FileBrowser({ setImage }: Props) {
   const handleChange = async (e: React.SyntheticEvent<HTMLInputElement>) => {
     let reader = new FileReader();
 
@@ -15,7 +15,7 @@ function FileBrowser({ setImageSource }: Props) {
       reader.onload = () => resolve(true);
     });
 
-    setImageSource(reader);
+    setImage(reader.result as string);
   };
 
   return <input type="file" onChange={handleChange} />;

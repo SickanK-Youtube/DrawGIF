@@ -1,8 +1,13 @@
 export type PixelData = [number, number, number, number];
 
-export interface Dimensions {
-  width: number;
-  height: number;
+export interface Crop {
+  x: number,
+  y: number,
 };
 
-export interface Size extends Dimensions {};
+export interface Aspect {
+  width: number,
+  height: number,
+};
+
+export interface Size extends Aspect {};

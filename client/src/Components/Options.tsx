@@ -1,30 +1,30 @@
 import React from "react";
-import { Dimensions } from "../types";
+import { Aspect } from "../types";
 
 interface Props {
-  dimensions: Dimensions;
-  setDimensions: React.Dispatch<React.SetStateAction<Dimensions>>;
+  aspect: Aspect;
+  setAspect: React.Dispatch<React.SetStateAction<Aspect>>;
 }
 
-function Options({ dimensions, setDimensions }: Props) {
+function Options({ aspect, setAspect }: Props) {
   return (
     <div>
       <input
         type="number"
-        value={dimensions.width}
+        value={aspect.width}
         onChange={(e) =>
-          setDimensions((d) => ({
-            ...d,
+          setAspect((a) => ({
+            ...a,
             width: Math.round(parseInt(e.target.value)),
           }))
         }
       />
       <input
         type="number"
-        value={dimensions.height}
+        value={aspect.height}
         onChange={(e) =>
-          setDimensions((d) => ({
-            ...d,
+          setAspect((a) => ({
+            ...a,
             height: Math.round(parseInt(e.target.value)),
           }))
         }

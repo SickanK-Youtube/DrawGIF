@@ -1,66 +1,58 @@
 import React, { useState } from "react";
 import Jimp from "jimp";
-import { determineResize } from "../utils";
-import { Dimensions } from "../types";
 import { v4 as uuidv4 } from "uuid";
+import { Aspect, Crop, Size } from "../types";
+import { determineResize } from "../utils";
 
 interface Props {
-  currentDimensions: Dimensions;
-  isUploading: boolean;
-  setIsUploading: React.Dispatch<React.SetStateAction<boolean>>;
-  canvasPreview: React.RefObject<HTMLCanvasElement>;
-  imageData: ImageData | null;
+  imageUrl: string;
+  aspect: Aspect;
+  crop: Crop;
+  size: Size;
+  zoom: number;
 }
 
-function ImageUpload({
-  canvasPreview,
-  imageData,
-  currentDimensions,
-  isUploading,
-  setIsUploading,
-}: Props) {
+function ImageUpload({ imageUrl, aspect, crop, size, zoom }: Props) {
   const [name, setName] = useState<string>("");
+  const [isUploading, setIsUploading] = useState<boolean>(false);
 
-  const handleChange = async (_: React.SyntheticEvent<HTMLButtonElement>) => {
+  const handleClick = async (_: React.SyntheticEvent<HTMLButtonElement>) => {
     setIsUploading(true);
-    let c = canvasPreview?.current;
-    let resize = determineResize(currentDimensions);
-    if (c !== null && imageData !== null && !isUploading) {
-      if (c.toDataURL().length > 20) {
-        try {
-          let image = await Jimp.read(c.toDataURL());
-          image.resize(resize.width, resize.height);
 
-          fetch("http://localhost:4567/addImage", {
-            method: "POST",
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              id: uuidv4(),
-              name: name.trim().replace(" ", "-"),
-              width: resize.width,
-              height: resize.height,
-              widthFrames: currentDimensions.width,
-              heightFrames: currentDimensions.height,
-              pixelData: image.bitmap.data.join(","),
-              type: "IMAGE",
-            }),
-          })
-            .then((res) => res.json())
-            .then((d) => console.log(d))
-            .then(() => {
-              setIsUploading(false);
-            })
-            .catch((e) => {
-              console.log(e);
-              setIsUploading(false);
-            });
-        } catch (error) {
-          console.log(error);
-        }
-      }
+    if (!isUploading) {
+      let image = await Jimp.read(imageUrl);
+      let resize = determineResize(aspect);
+      let x = (image.getWidth() * zoom) / 2 - crop.x - size.width / 2;
+      let y = (image.getHeight() * zoom) / 2 - crop.y - size.height / 2;
+
+      image.crop(x, y, size.width, size.height);
+      image.resize(resize.width, resize.height);
+
+      fetch("http://localhost:4567/addImage", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: uuidv4(),
+          name: name.trim().replace(" ", "-"),
+          width: resize.width,
+          height: resize.height,
+          widthFrames: aspect.width,
+          heightFrames: aspect.height,
+          pixelData: image.bitmap.data.join(","),
+          type: "IMG",
+        }),
+      })
+        .then((res) => res.json())
+        .then((d) => console.log(d))
+        .catch((e) => {
+          console.log(e);
+        })
+        .finally(() => {
+          setIsUploading(false);
+        });
     }
   };
 
@@ -68,10 +60,10 @@ function ImageUpload({
     <>
       <input
         type="text"
-        value={name}
         onChange={(e) => setName(e.target.value)}
+        value={name}
       />
-      <button onClick={handleChange}>Upload</button>
+      <button onClick={handleClick}>Upload</button>
     </>
   );
 }

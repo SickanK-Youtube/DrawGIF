@@ -1,67 +1,41 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-
-import { Dimensions } from "../types";
-import ReactCrop from "react-image-crop";
-import "react-image-crop/dist/ReactCrop.css";
+import React, { useState } from "react";
+import { Crop, Aspect, Size } from "../types";
 
 import FileBrowser from "./FileBrowser";
-import ImageUpload from "./ImageUpload";
-import Options from "./Options";
 import ImageCrop from "./ImageCrop";
+import Options from "./Options";
 
 import "../style.css";
+import ImageUpload from "./ImageUpload";
 
 function App() {
-  const defaultDimensions = {
-    width: 1,
-    height: 1,
-  };
-
-  const [isUploading, setIsUploading] = useState<boolean>(false);
-  const [imageSource, setImageSource] = useState<FileReader | null>(null);
-  const [imageData, setImageData] = useState<ImageData | null>(null);
-  const [dimensions, setDimensions] = useState<Dimensions>(defaultDimensions);
-  const [currentDimensions, setCurrentDimensions] = useState<Dimensions>(
-    defaultDimensions
-  );
-
-  const [isCropped, setIsCropped] = useState<boolean>(false);
-  const [crop, setCrop] = useState<ReactCrop.Crop>({
-    aspect: dimensions.width / dimensions.height,
-  });
-  const [completedCrop, setCompletedCrop] = useState<ReactCrop.Crop | null>(
-    null
-  );
-
-  const imgRef = useRef<any>(null);
-  const canvasPreview = useRef<HTMLCanvasElement>(null);
+  const [image, setImage] = useState<string>("");
+  const [crop, setCrop] = useState<Crop>({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState<number>(1);
+  const [aspect, setAspect] = useState<Aspect>({ width: 1, height: 1 });
+  const [size, setSize] = useState<Size>({ width: 1, height: 1 });
 
   return (
     <div className="App">
-      <FileBrowser setImageSource={setImageSource} />
+      <FileBrowser setImage={setImage} />
 
       <ImageCrop
-        dimensions={dimensions}
-        canvasPreview={canvasPreview}
-        setImageData={setImageData}
+        image={image}
         crop={crop}
         setCrop={setCrop}
-        setIsCropped={setIsCropped}
-        setCurrentDimensions={setCurrentDimensions}
-        completedCrop={completedCrop}
-        setCompletedCrop={setCompletedCrop}
-        imgRef={imgRef}
-        imageSource={imageSource}
+        zoom={zoom}
+        setZoom={setZoom}
+        aspect={aspect}
+        setSize={setSize}
       />
 
-      <Options dimensions={dimensions} setDimensions={setDimensions} />
-
+      <Options aspect={aspect} setAspect={setAspect} />
       <ImageUpload
-        imageData={imageData}
-        canvasPreview={canvasPreview}
-        currentDimensions={currentDimensions}
-        isUploading={isUploading}
-        setIsUploading={setIsUploading}
+        imageUrl={image}
+        crop={crop}
+        size={size}
+        aspect={aspect}
+        zoom={zoom}
       />
     </div>
   );

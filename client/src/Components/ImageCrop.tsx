@@ -1,113 +1,43 @@
-import React from "react";
+import React, { SetStateAction } from "react";
 import { useEffect } from "react";
-import { useCallback } from "react";
-import ReactCrop from "react-image-crop";
-import { Dimensions } from "../types";
+import Cropper from "react-easy-crop";
+import { Area } from "react-easy-crop/types";
+import { Aspect, Crop, Size } from "../types";
 
 interface Props {
-  dimensions: Dimensions;
-  canvasPreview: React.RefObject<HTMLCanvasElement>;
-  setImageData: React.Dispatch<React.SetStateAction<ImageData | null>>;
-  crop: ReactCrop.Crop;
-  setCrop: React.Dispatch<React.SetStateAction<ReactCrop.Crop>>;
-  setIsCropped: React.Dispatch<React.SetStateAction<boolean>>;
-  setCurrentDimensions: React.Dispatch<React.SetStateAction<Dimensions>>;
-  completedCrop: ReactCrop.Crop | null;
-  setCompletedCrop: React.Dispatch<React.SetStateAction<ReactCrop.Crop | null>>;
-  imgRef: React.MutableRefObject<any>;
-  imageSource: FileReader | null;
+  image: string;
+  crop: Crop;
+  setCrop: React.Dispatch<SetStateAction<Crop>>;
+  zoom: number;
+  setZoom: React.Dispatch<SetStateAction<number>>;
+  aspect: Aspect;
+  setSize: React.Dispatch<SetStateAction<Size>>;
 }
 
 function ImageCrop({
-  dimensions,
-  canvasPreview,
-  setImageData,
+  image,
   crop,
   setCrop,
-  setIsCropped,
-  setCurrentDimensions,
-  completedCrop,
-  setCompletedCrop,
-  imgRef,
-  imageSource,
+  zoom,
+  setZoom,
+  aspect,
+  setSize,
 }: Props) {
-  const onLoad = useCallback((img) => {
-    imgRef.current = img;
-  }, []);
-
-  useEffect(() => {
-    setCrop((c) => ({
-      ...c,
-      aspect: dimensions.width / dimensions.height,
-    }));
-  }, [dimensions]);
-
-  useEffect(() => {
-    if (crop.width !== 0) {
-      setIsCropped(true);
-    } else {
-      setIsCropped(false);
-    }
-
-    if (completedCrop !== null) {
-      const c = canvasPreview.current;
-      const image = imgRef.current;
-      if (c !== null && image instanceof HTMLImageElement) {
-        const scaleX = image.naturalWidth / image.width;
-        const scaleY = image.naturalHeight / image.height;
-        c.width = crop.width as number;
-        c.height = crop.height as number;
-
-        setCurrentDimensions({
-          width: dimensions.width,
-          height: dimensions.height,
-        });
-
-        const ctx = c.getContext("2d");
-        ctx?.drawImage(
-          image,
-          (crop.x as number) * scaleX,
-          (crop.y as number) * scaleY,
-          (crop.width as number) * scaleX,
-          (crop.height as number) * scaleY,
-          0,
-          0,
-          crop.width as number,
-          crop.height as number
-        );
-
-        let data = ctx?.getImageData(
-          0,
-          0,
-          (crop.width as number) * scaleX || 1,
-          (crop.height as number) * scaleY || 1
-        );
-        if (data !== undefined) setImageData(data);
-      }
-    }
-  }, [completedCrop]);
+  useEffect(() => {}, []);
 
   return (
     <>
-      <div>
-        {typeof imageSource?.result === "string" ? (
-          <ReactCrop
-            src={imageSource.result}
-            onChange={(c) => setCrop(c)}
-            onImageLoaded={onLoad}
-            crop={crop}
-            onComplete={(c) => setCompletedCrop(c)}
-            style={{ width: "100%" }}
-          />
-        ) : null}
+      <div className="crop">
+        <Cropper
+          image={image}
+          crop={crop}
+          zoom={zoom}
+          aspect={aspect.width / aspect.height}
+          onCropComplete={(_: Area, a: Area) => setSize(a)}
+          onCropChange={(c: Crop) => setCrop(c)}
+          onZoomChange={(z: number) => setZoom(z)}
+        />
       </div>
-
-      <canvas
-        ref={canvasPreview}
-        style={{
-          display: "none",
-        }}
-      ></canvas>
     </>
   );
 }

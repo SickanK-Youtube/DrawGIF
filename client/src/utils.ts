@@ -1,6 +1,4 @@
-import { monitorEventLoopDelay } from "perf_hooks";
-import ReactCrop from "react-image-crop";
-import { PixelData, Dimensions, Size } from "./types";
+import { Aspect, PixelData } from "./types";
 
 export function convertToPixelData(pixels: Buffer): PixelData[] {
     let pixelData: PixelData[] = [];
@@ -14,6 +12,6 @@ export function convertToPixelData(pixels: Buffer): PixelData[] {
     return pixelData;
 };
 
-export function determineResize(dimensions: Dimensions) {
-    return {width: 128 * dimensions.width, height: 128 * dimensions.height };
+export function determineResize(aspect: Aspect) {
+    return {width: 128 * aspect.width, height: 128 * aspect.height };
 };

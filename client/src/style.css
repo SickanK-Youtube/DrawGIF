@@ -1,1 +1,9 @@
-body{background-color:aquamarine}
+body {
+  background-color: aquamarine;
+}
+
+.crop {
+  position: relative;
+  width: 800px;
+  height: 400px;
+}
