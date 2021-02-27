@@ -1,5 +1,5 @@
 import React from "react";
-import { Aspect } from "../types";
+import { Aspect } from "../types/types";
 
 interface Props {
   aspect: Aspect;

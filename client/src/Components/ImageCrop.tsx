@@ -2,7 +2,7 @@ import React, { SetStateAction } from "react";
 import { useEffect } from "react";
 import Cropper from "react-easy-crop";
 import { Area } from "react-easy-crop/types";
-import { Aspect, Crop, Size } from "../types";
+import { Aspect, Crop, Size } from "../types/types";
 
 interface Props {
   image: string;
@@ -23,8 +23,6 @@ function ImageCrop({
   aspect,
   setSize,
 }: Props) {
-  useEffect(() => {}, []);
-
   return (
     <>
       <div className="crop">

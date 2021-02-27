@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Crop, Aspect, Size } from "../types";
+import { Crop, Aspect, Size } from "../types/types";
 
 import FileBrowser from "./FileBrowser";
 import ImageCrop from "./ImageCrop";
 import Options from "./Options";
+import "../types/gifuct-js.d.ts";
 
 import "../style.css";
 import ImageUpload from "./ImageUpload";

@@ -1,8 +1,7 @@
-import React, { useState } from "react";
-import Jimp from "jimp";
+import React, { useState, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { Aspect, Crop, Size } from "../types";
-import { determineResize } from "../utils";
+import getImagePixels from "../imageHandler";
+import { Aspect, Crop, Size } from "../types/types";
 
 interface Props {
   imageUrl: string;
@@ -20,39 +19,52 @@ function ImageUpload({ imageUrl, aspect, crop, size, zoom }: Props) {
     setIsUploading(true);
 
     if (!isUploading) {
-      let image = await Jimp.read(imageUrl);
-      let resize = determineResize(aspect);
-      let x = (image.getWidth() * zoom) / 2 - crop.x - size.width / 2;
-      let y = (image.getHeight() * zoom) / 2 - crop.y - size.height / 2;
+      try {
+        let imageData = await getImagePixels(
+          imageUrl,
+          aspect,
+          crop,
+          size,
+          zoom
+        );
 
-      image.crop(x, y, size.width, size.height);
-      image.resize(resize.width, resize.height);
+        let pixels = "";
 
-      fetch("http://localhost:4567/addImage", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: uuidv4(),
-          name: name.trim().replace(" ", "-"),
-          width: resize.width,
-          height: resize.height,
-          widthFrames: aspect.width,
-          heightFrames: aspect.height,
-          pixelData: image.bitmap.data.join(","),
-          type: "IMG",
-        }),
-      })
-        .then((res) => res.json())
-        .then((d) => console.log(d))
-        .catch((e) => {
-          console.log(e);
+        if (imageData.type === "image/gif") {
+          pixels = imageData.pixels.join(";");
+        } else {
+          pixels = imageData.pixels[0];
+        }
+
+        fetch("http://localhost:4567/addImage", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: uuidv4(),
+            name: name.trim().replace(" ", "-"),
+            width: imageData.width,
+            height: imageData.height,
+            widthFrames: aspect.width,
+            heightFrames: aspect.height,
+            pixelData: pixels,
+            type: imageData.type === "image/gif" ? "GIF" : "IMG",
+          }),
         })
-        .finally(() => {
-          setIsUploading(false);
-        });
+          .then((res) => res.json())
+          .then((d) => console.log(d))
+          .catch((e) => {
+            console.log(e);
+          })
+          .finally(() => {
+            setIsUploading(false);
+          });
+      } catch (e) {
+        console.error(e);
+        setIsUploading(false);
+      }
     }
   };
 
