@@ -1,4 +1,5 @@
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.map.MapCanvas;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
@@ -10,42 +11,20 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class GifMapRenderer extends MapRenderer {
+public class GifMapRenderer {
 
-    private Image[] images = null;
+    private ItemStack map;
     private int delay = 100;
 
-    public GifMapRenderer(File[] imageFiles, int delay) {
-        try {
-            ArrayList<Image> imagesList = new ArrayList<>();
-
-            for (File imageFile : imageFiles) {
-                imagesList.add(ImageIO.read(imageFile));
-            }
-
-            this.images = imagesList.toArray(new Image[0]);
+    public GifMapRenderer(ItemStack map, int delay) {
+            this.map = map;
             this.delay = delay;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+            //render()
     }
 
-    @Override
-    public void render(MapView mapview, MapCanvas mapcanvas, Player player) {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (images != null) {
-                    for (Image image : images) {
-                        mapcanvas.drawImage(0, 0, image);
-                        try {
-                            Thread.sleep(delay);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-        }.runTaskAsynchronously(DrawGIF.getPlugin(DrawGIF.class));
+    private void render(ItemStack map){
+
     }
+
 }

@@ -72,6 +72,8 @@ public class MagicMapHandler implements Listener {
             meta.setMapView(map.mapView);
             m.setItemMeta(meta);
 
+
+
             BlockFace heightDirection = getHeightDirection(blockFace, player);
             BlockFace widthDirection = getWidthDirection(blockFace, player);
 
