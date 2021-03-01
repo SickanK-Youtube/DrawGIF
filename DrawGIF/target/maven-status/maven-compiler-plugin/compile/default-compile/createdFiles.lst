@@ -1,3 +1,4 @@
+ImageMapRenderer$1.class
 MagicMapHandler$1.class
 JsonTypes$ImageResponse.class
 ImageMapRenderer.class
@@ -15,3 +16,6 @@ DrawGIF$2.class
 ImagePiece.class
 MapConfigHandler.class
 RouteHandler.class
+DrawGIF$3.class
+GifMapRenderer$1.class
+GifMapRenderer.class

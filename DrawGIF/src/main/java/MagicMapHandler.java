@@ -42,7 +42,7 @@ public class MagicMapHandler implements Listener {
 
             ItemMeta meta = m.getItemMeta();
             meta.getPersistentDataContainer().set(this.key, PersistentDataType.STRING, imageInfo.id);
-            meta.setDisplayName("Magic \"" + imageInfo.name + "\" Map");
+            meta.setDisplayName(imageInfo.name);
             m.setItemMeta(meta);
             this.map = m;
             player.getInventory().addItem(m);

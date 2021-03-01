@@ -1,7 +1,7 @@
 import FileType from "file-type/browser";
 import Jimp from "jimp";
 import { Aspect, Crop, ImagePixels, PixelData } from "./types/types";
-import { bufferToNumberArray, determineResize } from "./utils";
+import { determineResize } from "./utils";
 import { parseGIF, decompressFrames, ParsedFrame } from "gifuct-js";
 import { Size } from "react-easy-crop/types";
 
@@ -21,7 +21,7 @@ async function handleGif(
   crop: Crop,
   size: Size,
   zoom: number
-): Promise<string[]> {
+): Promise<[string[], number]> {
   const pixels: string[] = [];
   const mainCanvas: HTMLCanvasElement = document.createElement("canvas");
   const frameCanvas: HTMLCanvasElement = document.createElement("canvas");
@@ -66,7 +66,11 @@ async function handleGif(
     if (pixelData !== undefined) pixels.push(pixelData);
   }
 
-  return pixels;
+  let delays = gifFrames.map((frame) => frame.delay);
+  let averageDelay =
+    delays.reduce((a: number, b: number) => a + b) / delays.length;
+
+  return [pixels, averageDelay];
 }
 
 async function handleImage(
@@ -115,9 +119,12 @@ export default async function getImagePixels(
   }
 
   let pixels: string[] = [];
+  let delay = 0;
 
   if (imageMime === "image/gif") {
-    pixels = await handleGif(imageUrl, aspect, crop, size, zoom);
+    let gifResponse = await handleGif(imageUrl, aspect, crop, size, zoom);
+    pixels = gifResponse[0];
+    delay = Math.round(gifResponse[1]);
   } else {
     pixels = [await handleImage(imageUrl, aspect, crop, size, zoom)];
   }
@@ -129,5 +136,6 @@ export default async function getImagePixels(
     pixels,
     width: resize.width,
     height: resize.height,
+    delay,
   };
 }

@@ -3,7 +3,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
-import org.bukkit.event.Listener;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -11,10 +10,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.Vector;
 
 public class DrawGIF extends JavaPlugin {
     public static final String MAPS_YML = "maps.yml";
@@ -22,21 +19,10 @@ public class DrawGIF extends JavaPlugin {
     public static final String DATA_FOLDER = "plugins/DrawGIF/";
     public static final int CONFIG_VERSION = 1;
 
-    // get request <- Done!
-    // make all frames and assign to maps <- Done!
-    // save all frames in an yaml file <- Done!
-    // Give player one "magic" frame (Complete picture?) and make it place the whole thing when placed in an item frame
-    // On remove give back the original picture
-
-    // TODO:
-    // - Get and list maps (Command)
-    // - Automatic placement
-    // - GIFs
     static {
         ConfigurationSerialization.registerClass(ImageInfo.class);
         ConfigurationSerialization.registerClass(ImagePiece.class);
     }
-
 
     @Override
     public void onEnable() {
@@ -59,9 +45,14 @@ public class DrawGIF extends JavaPlugin {
             e.printStackTrace();
         }
 
-        RouteHandler routeHandler = new RouteHandler();
-        routeHandler.AddImage(this);
-        routeHandler.HandleOptions();
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                RouteHandler routeHandler = new RouteHandler();
+                routeHandler.AddImage(DrawGIF.getPlugin(DrawGIF.class));
+                routeHandler.HandleOptions();
+            }
+        }.runTaskAsynchronously(this);
 
         MapConfigHandler configHandler = new MapConfigHandler(new File(DrawGIF.DATA_FOLDER, DrawGIF.MAPS_YML));
 

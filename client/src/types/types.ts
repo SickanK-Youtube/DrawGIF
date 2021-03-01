@@ -15,6 +15,7 @@ export interface ImagePixels {
   pixels: string[];
   width: number;
   height: number;
+  delay: number;
 }
 
 export interface Size extends Aspect {}

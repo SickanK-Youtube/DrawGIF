@@ -43,7 +43,7 @@ public class MapConfigHandler {
             return null;
         }
 
-        ImagePiece[] imagePieces = new ImagePiece[imageInfo.height * imageInfo.width];
+        ImagePiece[] imagePieces = new ImagePiece[imageInfo.height * imageInfo.width * imageInfo.length];
 
         int index = 0;
         for (String key : imageInfo.imagePieces) {

@@ -2,6 +2,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.map.MapCanvas;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -12,7 +13,7 @@ public class ImageMapRenderer extends MapRenderer {
     private Image image = null;
     private boolean firstRender = true;
 
-    public ImageMapRenderer(File imageFile){
+    public ImageMapRenderer(File imageFile) {
         try {
             this.image = ImageIO.read(imageFile);
         } catch (IOException e) {
@@ -22,10 +23,15 @@ public class ImageMapRenderer extends MapRenderer {
 
     @Override
     public void render(MapView mapview, MapCanvas mapcanvas, Player player) {
-        if(this.image != null && this.firstRender){
-            mapcanvas.drawImage(0, 0, this.image);
-            this.firstRender = false;
-        }
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (image != null && firstRender) {
+                    mapcanvas.drawImage(0, 0, image);
+                    firstRender = false;
+                }
+            }
+        }.runTaskAsynchronously(DrawGIF.getPlugin(DrawGIF.class));
     }
 
 }

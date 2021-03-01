@@ -9,7 +9,7 @@ public class RouteHandler {
             JsonTypes.ImageResponse data = gson.fromJson(req.body(), JsonTypes.ImageResponse.class);
             new AddImageTask(data).runTaskAsynchronously(plugin);
 
-            System.out.println("Sent");
+            System.out.println("Added new image");
             JsonTypes.Status status = new JsonTypes.Status(200, "Image added");
             return gson.toJson(status);
         });

@@ -11,6 +11,9 @@ public class ImageInfo implements ConfigurationSerializable {
     int x;
     int y;
     String[] imagePieces;
+    String type;
+    int length;
+    int delay;
 
     public ImageInfo(
             String id,
@@ -19,7 +22,10 @@ public class ImageInfo implements ConfigurationSerializable {
             int height,
             int x,
             int y,
-            String[] imagePieces
+            String[] imagePieces,
+            String type,
+            int length,
+            int delay
     ) {
         this.id = id;
         this.name = name;
@@ -28,6 +34,9 @@ public class ImageInfo implements ConfigurationSerializable {
         this.x = x;
         this.y = y;
         this.imagePieces = imagePieces;
+        this.type = type;
+        this.length = length;
+        this.delay = delay;
     }
 
     public ImageInfo(Map<?, ?> map) {
@@ -37,9 +46,12 @@ public class ImageInfo implements ConfigurationSerializable {
         this.height = (Integer) map.get("height");
         this.x = (Integer) map.get("x");
         this.y = (Integer) map.get("y");
+        this.type = map.get("type").toString();
+        this.length = (Integer) map.get("length");
+        this.delay = (Integer) map.get("delay");
 
         Map<String, Object> pieces = (Map<String, Object>) map.get("imagePieces");
-        String[] imagePieces = new String[this.width*this.height];
+        String[] imagePieces = new String[this.width*this.height*this.length];
         int index = 0;
         for(String piece : pieces.keySet()){
             imagePieces[index] = piece;
@@ -76,6 +88,17 @@ public class ImageInfo implements ConfigurationSerializable {
         return height;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public int getLength() {
+        return length;
+    }
+
+    public int getDelay() {
+        return delay;
+    }
 
     @Override
     public Map<String, Object> serialize() {
@@ -86,6 +109,9 @@ public class ImageInfo implements ConfigurationSerializable {
         m.put("height", height);
         m.put("x", x);
         m.put("y", y);
+        m.put("type", type);
+        m.put("length", length);
+        m.put("delay", delay);
 
         Map<String, String> pieces = new HashMap<>();
         for(String piece : imagePieces) pieces.put(piece, piece);

@@ -10,6 +10,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,39 +23,75 @@ public class AddImageTask extends BukkitRunnable {
 
     @Override
     public void run() {
-        int arraySize = data.widthFrames * data.heightFrames;
+        int arraySize = data.widthFrames * data.heightFrames * data.length;
         int currentIndex = 0;
         Map<String, ImagePiece> imagePieces = new HashMap<>();
         String[] imagePieceNames = new String[arraySize];
 
+        Map<String, MapView> mapViews = new HashMap<>();
+        Map<String, ArrayList<File>> imageFiles = new HashMap<>();
+
         // Create all maps
-        for (int wf = 0; wf < data.widthFrames; wf++) {
-            for (int hf = 0; hf < data.heightFrames; hf++) {
-                int[] pixels = stringArrayToIntArray(data.pixelData.split(","));
-                BufferedImage image = drawImage(wf, hf, pixels);
+        String[] pixelCells = data.pixelData.split(";");
 
-                String filename = data.id + "_" + wf + hf + ".jpg";
-                File imageFile = new File(DrawGIF.DATA_FOLDER + DrawGIF.IMAGE_FOLDER, filename);
+        for (int len = 0; len < pixelCells.length; len++) {
+            for (int wf = 0; wf < data.widthFrames; wf++) {
+                for (int hf = 0; hf < data.heightFrames; hf++) {
+                    int[] pixels = stringArrayToIntArray(pixelCells[len].split(","));
+                    BufferedImage image = drawImage(wf, hf, pixels);
 
-                try {
-                    ImageIO.write(image, "jpg", imageFile);
-                    MapView mapView = Bukkit.createMap(Bukkit.getWorlds().get(0));
-                    mapView.addRenderer(new ImageMapRenderer(imageFile));
+                    String filename = data.id + "_" + wf + hf + "_" + len + ".png";
+                    File imageFile = new File(DrawGIF.DATA_FOLDER + DrawGIF.IMAGE_FOLDER, filename);
 
-                    String name = data.id + "_" + wf + hf;
-                    imagePieces.put(name, new ImagePiece(mapView.getId(), filename, wf, hf));
-                    imagePieceNames[currentIndex] = name;
+                    try {
+                        ImageIO.write(image, "png", imageFile);
+                        String name = data.id + "_" + wf + hf + "_" + len;
 
-                } catch (IOException e) {
-                    e.printStackTrace();
+                        if (data.type.equals("GIF")) {
+                            if (len == 0) {
+                                MapView mapView = Bukkit.createMap(Bukkit.getWorlds().get(0));
+                                mapViews.put(Integer.toString(wf) + hf, mapView);
+                                imageFiles.put(Integer.toString(wf) + hf, new ArrayList<>());
+                            }
+
+                            ArrayList<File> files = imageFiles.get(Integer.toString(wf) + hf);
+                            files.add(imageFile);
+                            imageFiles.put(Integer.toString(wf) + hf, files);
+
+                            imagePieces.put(name, new ImagePiece(mapViews.get(Integer.toString(wf) + hf).getId(), filename, wf, hf));
+                        } else {
+                            MapView mapView = Bukkit.createMap(Bukkit.getWorlds().get(0));
+                            mapView.addRenderer(new ImageMapRenderer(imageFile));
+
+                            imagePieces.put(name, new ImagePiece(mapView.getId(), filename, wf, hf));
+                        }
+                        imagePieceNames[currentIndex] = name;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    currentIndex += 1;
+                }
+            }
+        }
+
+        if (data.type.equals("GIF")) {
+            for (String mapView : mapViews.keySet()) {
+                Object[] filesObj = imageFiles.get(mapView).toArray();
+                File[] files = new File[filesObj.length];
+
+                int index = 0;
+                for (Object f : filesObj) {
+                    files[index] = (File) f;
+                    index += 1;
                 }
 
-                currentIndex += 1;
+                mapViews.get(mapView).addRenderer(new GifMapRenderer(files, data.delay));
             }
         }
 
         // Add maps to configuration file
-        ImageInfo imageInfo = new ImageInfo(data.id, data.name, data.widthFrames, data.heightFrames, 0, 0, imagePieceNames);
+        ImageInfo imageInfo = new ImageInfo(data.id, data.name, data.widthFrames, data.heightFrames, 0, 0, imagePieceNames, data.type, data.length, data.delay);
         YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(DrawGIF.DATA_FOLDER + DrawGIF.MAPS_YML));
 
         ConfigurationSection mapsSection = config.getConfigurationSection("maps");

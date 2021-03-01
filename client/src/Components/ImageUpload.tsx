@@ -51,6 +51,8 @@ function ImageUpload({ imageUrl, aspect, crop, size, zoom }: Props) {
             heightFrames: aspect.height,
             pixelData: pixels,
             type: imageData.type === "image/gif" ? "GIF" : "IMG",
+            length: imageData.pixels.length,
+            delay: imageData.delay,
           }),
         })
           .then((res) => res.json())
