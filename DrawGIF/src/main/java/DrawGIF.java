@@ -10,6 +10,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -18,6 +19,17 @@ public class DrawGIF extends JavaPlugin {
     public static final String IMAGE_FOLDER = "images";
     public static final String DATA_FOLDER = "plugins/DrawGIF/";
     public static final int CONFIG_VERSION = 1;
+    private static ArrayList<String> loadedGifs = new ArrayList<>();
+
+    public static boolean isLoadedGifs(String gif){
+        return loadedGifs.contains(gif);
+    }
+
+    public static void pushLoadedGifs(String gif){
+        if(!loadedGifs.contains(gif)){
+            loadedGifs.add(gif);
+        }
+    }
 
     static {
         ConfigurationSerialization.registerClass(ImageInfo.class);

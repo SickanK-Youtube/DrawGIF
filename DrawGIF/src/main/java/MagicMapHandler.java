@@ -1,3 +1,4 @@
+import jdk.internal.joptsimple.util.RegexMatcher;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -12,6 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Objects;
 import java.util.Vector;
@@ -35,7 +37,7 @@ public class MagicMapHandler implements Listener {
     }
 
     private Vector<ConfigTypes.MapPiece> createMaps() {
-        if(player != null) {
+        if (player != null) {
             ItemStack m = new ItemStack(Material.MAP);
             m.addUnsafeEnchantment(Enchantment.LOYALTY, 1);
             m.addItemFlags(ItemFlag.HIDE_ENCHANTS);
@@ -52,11 +54,13 @@ public class MagicMapHandler implements Listener {
 
         try {
             for (ImagePiece image : imagePieces) {
-                int id = image.mapViewId;
-                int x = image.x;
-                int y = image.y;
-                String filename = image.filename;
-                maps.add(new ConfigTypes.MapPiece(Bukkit.getMap(id), filename, x, y));
+                if (image.filename.matches(imageInfo.id + "_[0-9][0-9]_0.png")) {
+                    int id = image.mapViewId;
+                    int x = image.x;
+                    int y = image.y;
+                    String filename = image.filename;
+                    maps.add(new ConfigTypes.MapPiece(Bukkit.getMap(id), filename, x, y));
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -67,13 +71,6 @@ public class MagicMapHandler implements Listener {
 
     private void placeMaps(BlockFace blockFace, Player player, Location initialLocation) {
         for (ConfigTypes.MapPiece map : this.maps) {
-            ItemStack m = new ItemStack(Material.FILLED_MAP);
-            MapMeta meta = (MapMeta) m.getItemMeta();
-            meta.setMapView(map.mapView);
-            m.setItemMeta(meta);
-
-
-
             BlockFace heightDirection = getHeightDirection(blockFace, player);
             BlockFace widthDirection = getWidthDirection(blockFace, player);
 
@@ -155,7 +152,23 @@ public class MagicMapHandler implements Listener {
                             player.getWorld().getBlockAt(newLocation).getLocation(), ItemFrame.class);
                     frame.setFacingDirection(blockFace);
                     frame.setRotation(facingToRotation(heightDirection, widthDirection));
-                    frame.setItem(m);
+
+
+                    if (imageInfo.type.equals("GIF")) {
+                        new BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                new GifMapRenderer(frame, imageInfo.id, 30);
+                            }
+                        }.runTaskAsynchronously(DrawGIF.getPlugin(DrawGIF.class));
+                    } else {
+                        ItemStack m = new ItemStack(Material.FILLED_MAP);
+                        MapMeta meta = (MapMeta) m.getItemMeta();
+                        meta.setMapView(map.mapView);
+                        m.setItemMeta(meta);
+                        frame.setItem(m);
+                    }
+
                 } catch (IllegalArgumentException e) {
                 }
             }
@@ -174,12 +187,12 @@ public class MagicMapHandler implements Listener {
         if (clickedBlock != null && (Objects.equals(mainHandId, imageInfo.id) || Objects.equals(offHandId, imageInfo.id))) {
             event.setCancelled(true);
 
-            if(Objects.equals(mainHandId, imageInfo.id)) {
-                mainHand.setAmount(mainHand.getAmount()-1);
+            if (Objects.equals(mainHandId, imageInfo.id)) {
+                mainHand.setAmount(mainHand.getAmount() - 1);
             }
 
-            if(Objects.equals(offHandId, imageInfo.id)) {
-                offHand.setAmount(offHand.getAmount()-1);
+            if (Objects.equals(offHandId, imageInfo.id)) {
+                offHand.setAmount(offHand.getAmount() - 1);
             }
 
             placeMaps(event.getBlockFace(), event.getPlayer(), clickedBlock.getLocation());
