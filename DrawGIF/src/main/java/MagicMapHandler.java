@@ -15,6 +15,7 @@ import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Vector;
 
@@ -70,6 +71,7 @@ public class MagicMapHandler implements Listener {
     }
 
     private void placeMaps(BlockFace blockFace, Player player, Location initialLocation) {
+        ArrayList<GifMapRenderer> gifMapRenderers = new ArrayList<>();
         for (ConfigTypes.MapPiece map : this.maps) {
             BlockFace heightDirection = getHeightDirection(blockFace, player);
             BlockFace widthDirection = getWidthDirection(blockFace, player);
@@ -155,12 +157,7 @@ public class MagicMapHandler implements Listener {
 
 
                     if (imageInfo.type.equals("GIF")) {
-                        new BukkitRunnable() {
-                            @Override
-                            public void run() {
-                                new GifMapRenderer(frame, imageInfo.id, 30);
-                            }
-                        }.runTaskAsynchronously(DrawGIF.getPlugin(DrawGIF.class));
+                        gifMapRenderers.add(new GifMapRenderer(frame, imageInfo.id, map.x, map.y));
                     } else {
                         ItemStack m = new ItemStack(Material.FILLED_MAP);
                         MapMeta meta = (MapMeta) m.getItemMeta();
@@ -172,6 +169,15 @@ public class MagicMapHandler implements Listener {
                 } catch (IllegalArgumentException e) {
                 }
             }
+        }
+
+        if (imageInfo.type.equals("GIF")) {
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    new GifMapHandler(gifMapRenderers.toArray(new GifMapRenderer[0]), 60);
+                }
+            }.runTaskAsynchronously(DrawGIF.getPlugin(DrawGIF.class));
         }
     }
 

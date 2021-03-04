@@ -2,6 +2,7 @@ JsonTypes$ImageResponse.class
 JsonTypes$Status.class
 AddImageTask.class
 CommandHandler.class
+GifMapHandler.class
 DrawGIF.class
 JsonTypes.class
 MapConfigHandler.class
