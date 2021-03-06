@@ -1,31 +1,101 @@
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.ItemFrame;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.map.MapRenderer;
 import org.bukkit.map.MapView;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.slf4j.Logger;
+import org.testng.annotations.Listeners;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Locale;
+import java.util.*;
 
-public class DrawGIF extends JavaPlugin {
+public class DrawGIF extends JavaPlugin implements Listener {
     public static final String MAPS_YML = "maps.yml";
     public static final String IMAGE_FOLDER = "images";
     public static final String DATA_FOLDER = "plugins/DrawGIF/";
     public static final int CONFIG_VERSION = 1;
+    private boolean gifsLoaded = false;
+
+    private static ArrayList<String> loadedGifs = new ArrayList<>();
+
+    public static boolean isLoadedGifs(String gif) {
+        return loadedGifs.contains(gif);
+    }
+
+    public static void pushLoadedGifs(String gif) {
+        if (!loadedGifs.contains(gif)) {
+            loadedGifs.add(gif);
+        }
+    }
 
     static {
         ConfigurationSerialization.registerClass(ImageInfo.class);
         ConfigurationSerialization.registerClass(ImagePiece.class);
+        ConfigurationSerialization.registerClass(PlacedFrame.class);
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        MapConfigHandler configHandler = new MapConfigHandler(new File(DrawGIF.DATA_FOLDER, DrawGIF.MAPS_YML));
+
+        if (!gifsLoaded) {
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    PlacedFrame[] frames = configHandler.getAllPlacedFrames();
+                    Map<String, ArrayList<GifMapRenderer>> gifRenderers = new HashMap<>();
+                    if (frames != null) {
+                        for (PlacedFrame frame : frames) {
+                            ItemFrame itemFrame = locateItemFrame(new Location(event.getPlayer().getWorld(), frame.x, frame.y, frame.z));
+
+                            if (itemFrame != null) {
+                                if (!gifRenderers.containsKey(frame.id)) {
+                                    gifRenderers.put(frame.id, new ArrayList<>());
+                                }
+
+                                String xy = frame.filename.split("_")[1];
+                                int x = Integer.parseInt(xy.split("")[0]);
+                                int y = Integer.parseInt(xy.split("")[1]);
+
+                                ArrayList<GifMapRenderer> gifMapRendererList = gifRenderers.get(frame.id);
+                                gifMapRendererList.add(new GifMapRenderer(itemFrame, frame.id, x, y));
+                                gifRenderers.put(frame.id, gifMapRendererList);
+
+                            } else {
+                                // Clean Up
+                            }
+                        }
+
+                        for (String key : gifRenderers.keySet()) {
+                            new BukkitRunnable() {
+                                @Override
+                                public void run() {
+                                    new GifMapHandler(gifRenderers.get(key).toArray(new GifMapRenderer[0]), 60);
+                                }
+                            }.runTaskAsynchronously(DrawGIF.getPlugin(DrawGIF.class));
+                        }
+                    }
+                }
+            }.runTask(this);
+            this.gifsLoaded = true;
+        }
     }
 
     @Override
     public void onEnable() {
+        Bukkit.getPluginManager().registerEvents(this, this);
         getDataFolder().mkdir();
         File mapsConfig = new File(DATA_FOLDER, MAPS_YML);
         File imageFolder = new File(DATA_FOLDER, IMAGE_FOLDER);
@@ -37,6 +107,7 @@ public class DrawGIF extends JavaPlugin {
                 config.set("maps", new HashMap<String, ImageInfo>());
                 config.set("pieces", new HashMap<String, ImagePiece>());
                 config.set("reference", new HashMap<String, String>());
+                config.set("frames", new HashMap<String, PlacedFrame>());
                 config.save(mapsConfig);
             }
 
@@ -116,6 +187,17 @@ public class DrawGIF extends JavaPlugin {
             }
         }
         return false;
+    }
+
+    public ItemFrame locateItemFrame(Location location) {
+        Collection<Entity> nearbyEntities = location.getWorld().getNearbyEntities(location, 0.5, 0.5, 0.5);
+        for (Entity entity : nearbyEntities) {
+            if (entity instanceof ItemFrame) {
+                return (ItemFrame) entity;
+            }
+        }
+
+        return null;
     }
 }
 

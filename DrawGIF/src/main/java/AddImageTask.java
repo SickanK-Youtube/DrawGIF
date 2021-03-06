@@ -25,7 +25,7 @@ public class AddImageTask extends BukkitRunnable {
     public void run() {
         int arraySize = data.widthFrames * data.heightFrames * data.length;
         int currentIndex = 0;
-        Map<String, ArrayList<Map<String, ImagePiece>>> imagePieces = new HashMap<>();
+        Map<String, ImagePiece> imagePieces = new HashMap<>();
         String[] imagePieceNames = new String[arraySize];
 
         // Create all maps
@@ -46,18 +46,7 @@ public class AddImageTask extends BukkitRunnable {
                         MapView mapView = Bukkit.createMap(Bukkit.getWorlds().get(0));
                         mapView.addRenderer(new ImageMapRenderer(imageFile));
 
-                        String imagePieceName = Integer.toString(wf) + hf;
-                        if (len == 0) {
-                            imagePieces.put(imagePieceName, new ArrayList<>());
-                        }
-
-                        ArrayList<Map<String, ImagePiece>> currentIP = imagePieces.get(imagePieceName);
-
-                        Map<String, ImagePiece> tempImagePiece = new HashMap<>();
-                        tempImagePiece.put(name, new ImagePiece(mapView.getId(), 0, filename, wf, hf));
-                        currentIP.add(tempImagePiece);
-
-                        imagePieces.put(imagePieceName, currentIP);
+                        imagePieces.put(name, new ImagePiece(mapView.getId(), filename, wf, hf));
                         imagePieceNames[currentIndex] = name;
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -66,27 +55,6 @@ public class AddImageTask extends BukkitRunnable {
                     currentIndex += 1;
                 }
             }
-        }
-
-        Map<String, ImagePiece> finalImagePieces = new HashMap<>();
-        String[] pieceKeys = imagePieces.keySet().toArray(new String[0]);
-
-        for (String key : pieceKeys) {
-            Object[] objectPieces = imagePieces.get(key).toArray();
-            ArrayList<Map<String, ImagePiece>> pieces = new ArrayList<Map<String, ImagePiece>>();
-
-            for(Object objectPiece : objectPieces){
-                pieces.add((Map<String, ImagePiece>) objectPiece);
-            }
-
-            for (int i = 0; i < pieces.toArray().length; i++) {
-                int next = i + 1 >= pieces.toArray().length ? 0 : i + 1;
-                String firstImagePieceKey = pieces.get(i).keySet().toArray(new String[0])[0];
-                ImagePiece finalImagePiece = pieces.get(i).get(firstImagePieceKey);
-                finalImagePiece.nextMapViewId = pieces.get(next).get(pieces.get(next).keySet().toArray(new String[0])[0]).mapViewId;
-                finalImagePieces.put(firstImagePieceKey, finalImagePiece);
-            }
-
         }
 
         // Add maps to configuration file
@@ -114,7 +82,7 @@ public class AddImageTask extends BukkitRunnable {
                 pieces.put(id, (ImagePiece) imgPiece);
             });
         }
-        finalImagePieces.forEach(pieces::put);
+        imagePieces.forEach(pieces::put);
         config.set("pieces", pieces);
 
         ConfigurationSection mapReferenceSection = config.getConfigurationSection("reference");

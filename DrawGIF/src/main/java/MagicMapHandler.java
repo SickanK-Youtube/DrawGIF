@@ -2,6 +2,8 @@ import jdk.internal.joptsimple.util.RegexMatcher;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
@@ -15,9 +17,10 @@ import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.Vector;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 public class MagicMapHandler implements Listener {
     ImageInfo imageInfo;
@@ -25,7 +28,8 @@ public class MagicMapHandler implements Listener {
     Player player;
     ItemStack map = null;
     NamespacedKey key;
-    Vector<ConfigTypes.MapPiece> maps;
+    Vector<MapPiece> maps;
+    YamlConfiguration config = YamlConfiguration.loadConfiguration(new File(DrawGIF.DATA_FOLDER + DrawGIF.MAPS_YML));
 
     public MagicMapHandler(ImageInfo imageInfo, ImagePiece[] imagePieces, Player player) {
         this.imageInfo = imageInfo;
@@ -37,7 +41,7 @@ public class MagicMapHandler implements Listener {
         }
     }
 
-    private Vector<ConfigTypes.MapPiece> createMaps() {
+    private Vector<MapPiece> createMaps() {
         if (player != null) {
             ItemStack m = new ItemStack(Material.MAP);
             m.addUnsafeEnchantment(Enchantment.LOYALTY, 1);
@@ -51,7 +55,7 @@ public class MagicMapHandler implements Listener {
             player.getInventory().addItem(m);
         }
 
-        Vector<ConfigTypes.MapPiece> maps = new Vector<>();
+        Vector<MapPiece> maps = new Vector<>();
 
         try {
             for (ImagePiece image : imagePieces) {
@@ -60,7 +64,7 @@ public class MagicMapHandler implements Listener {
                     int x = image.x;
                     int y = image.y;
                     String filename = image.filename;
-                    maps.add(new ConfigTypes.MapPiece(Bukkit.getMap(id), filename, x, y));
+                    maps.add(new MapPiece(Bukkit.getMap(id), filename, x, y));
                 }
             }
         } catch (Exception e) {
@@ -72,7 +76,8 @@ public class MagicMapHandler implements Listener {
 
     private void placeMaps(BlockFace blockFace, Player player, Location initialLocation) {
         ArrayList<GifMapRenderer> gifMapRenderers = new ArrayList<>();
-        for (ConfigTypes.MapPiece map : this.maps) {
+        Map<String, PlacedFrame> frames = new HashMap<>();
+        for (MapPiece map : this.maps) {
             BlockFace heightDirection = getHeightDirection(blockFace, player);
             BlockFace widthDirection = getWidthDirection(blockFace, player);
 
@@ -155,6 +160,7 @@ public class MagicMapHandler implements Listener {
                     frame.setFacingDirection(blockFace);
                     frame.setRotation(facingToRotation(heightDirection, widthDirection));
 
+                    frames.put(imageInfo.id + "_" + Math.round(newLocation.getX()) + Math.round(newLocation.getY()) + Math.round(newLocation.getZ()), new PlacedFrame(imageInfo.id, map.filename, newLocation.getX(), newLocation.getY(), newLocation.getZ()));
 
                     if (imageInfo.type.equals("GIF")) {
                         gifMapRenderers.add(new GifMapRenderer(frame, imageInfo.id, map.x, map.y));
@@ -169,7 +175,26 @@ public class MagicMapHandler implements Listener {
                 } catch (IllegalArgumentException e) {
                 }
             }
+
+            ConfigurationSection frameSection = config.getConfigurationSection("frames");
+            if (frameSection != null) {
+                Map<String, Object> existingFrames = frameSection.getValues(false);
+
+                existingFrames.forEach((name, placedFrame) -> {
+                    frames.put(name, (PlacedFrame) placedFrame);
+                });
+
+                config.set("frames", frames);
+            }
+
+            try {
+                config.save(new File(DrawGIF.DATA_FOLDER, DrawGIF.MAPS_YML));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
         }
+
 
         if (imageInfo.type.equals("GIF")) {
             new BukkitRunnable() {

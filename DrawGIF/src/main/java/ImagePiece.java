@@ -5,14 +5,12 @@ import java.util.Map;
 
 public class ImagePiece implements ConfigurationSerializable {
     int mapViewId;
-    int nextMapViewId;
     String filename;
     int x;
     int y;
 
-    public ImagePiece(int mapViewId, int nextMapViewId, String filename, int x, int y){
+    public ImagePiece(int mapViewId, String filename, int x, int y){
         this.mapViewId = mapViewId;
-        this.nextMapViewId = nextMapViewId;
         this.filename = filename;
         this.x = x;
         this.y = y;
@@ -23,7 +21,6 @@ public class ImagePiece implements ConfigurationSerializable {
         this.x = (Integer) map.get("x");
         this.y = (Integer) map.get("y");
         this.mapViewId = (Integer) map.get("mapViewId");
-        this.nextMapViewId = (Integer) map.get("nextMapViewId");
     }
 
     public String getFilename() {
@@ -33,8 +30,6 @@ public class ImagePiece implements ConfigurationSerializable {
     public int getMapViewId() {
         return mapViewId;
     }
-
-    public int getNextMapViewId() { return nextMapViewId; }
 
     public int getX() {
         return x;
@@ -48,7 +43,6 @@ public class ImagePiece implements ConfigurationSerializable {
     public Map<String, Object> serialize() {
         Map<String, Object> m = new HashMap();
         m.put("mapViewId", mapViewId);
-        m.put("nextMapViewId", nextMapViewId);
         m.put("filename", filename);
         m.put("x", x);
         m.put("y", y);

@@ -70,6 +70,22 @@ public class MapConfigHandler {
         return imagePieces.toArray(new ImagePiece[0]);
     }
 
+    public PlacedFrame[] getAllPlacedFrames() {
+        ConfigurationSection frameSection = this.config.getConfigurationSection("frames");
+
+        if (frameSection == null) {
+            return null;
+        }
+
+        Vector<PlacedFrame> frames = new Vector<>();
+
+        for(String key : frameSection.getKeys(false)){
+            frames.add((PlacedFrame) frameSection.get(key));
+        };
+
+        return frames.toArray(new PlacedFrame[0]);
+    }
+
     public HashMap[] getReference(String name) {
         ConfigurationSection referenceSection = config.getConfigurationSection("reference");
         if (referenceSection == null || name == null) {

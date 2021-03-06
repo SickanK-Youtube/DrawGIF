@@ -4,6 +4,7 @@ import org.bukkit.entity.Item;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.MapMeta;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -16,6 +17,8 @@ public class GifMapRenderer {
     private int delay;
     private final int x;
     private final int y;
+    private Boolean loaded;
+    private Boolean loading = false;
 
     private final ArrayList<ItemStack> mapsList = new ArrayList<>();
     private ItemStack[] maps = new ItemStack[0];
@@ -24,9 +27,9 @@ public class GifMapRenderer {
     public GifMapRenderer(ItemFrame frame, String id, int x, int y) {
         this.frame = frame;
         this.id = id;
-        this.delay = delay;
         this.x = x;
         this.y = y;
+        this.loaded = DrawGIF.isLoadedGifs(this.id);
 
         this.getIds();
         this.render();
@@ -60,7 +63,36 @@ public class GifMapRenderer {
     public void next() {
         index += 1;
         if (index == maps.length) index = 0;
-        this.render();
+
+        if(this.loaded){
+            this.render();
+        } else {
+            if(!loading) {
+                this.loading = true;
+                this.loadMaps();
+            }
+        }
+    }
+
+    private void loadMaps() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                for(ItemStack map : maps){
+                    frame.setItem(map);
+
+                    if(DrawGIF.isLoadedGifs(id)) break;
+
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                loaded = true;
+                DrawGIF.pushLoadedGifs(id);
+            }
+        }.runTaskAsynchronously(DrawGIF.getPlugin(DrawGIF.class));
     }
 
     private void render() {
