@@ -24,19 +24,17 @@ function ImageCrop({
   setSize,
 }: Props) {
   return (
-    <>
-      <div className="crop">
-        <Cropper
-          image={image}
-          crop={crop}
-          zoom={zoom}
-          aspect={aspect.width / aspect.height}
-          onCropComplete={(_: Area, a: Area) => setSize(a)}
-          onCropChange={(c: Crop) => setCrop(c)}
-          onZoomChange={(z: number) => setZoom(z)}
-        />
-      </div>
-    </>
+    <div className="crop">
+      <Cropper
+        image={image}
+        crop={crop}
+        zoom={zoom}
+        aspect={aspect.width / aspect.height}
+        onCropComplete={(_: Area, a: Area) => setSize(a)}
+        onCropChange={(c: Crop) => setCrop(c)}
+        onZoomChange={(z: number) => setZoom(z)}
+      />
+    </div>
   );
 }
 

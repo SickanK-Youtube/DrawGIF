@@ -17,7 +17,7 @@ function App() {
   const [size, setSize] = useState<Size>({ width: 1, height: 1 });
 
   return (
-    <div className="App">
+    <div className="app">
       <FileBrowser setImage={setImage} />
 
       <ImageCrop
@@ -30,14 +30,17 @@ function App() {
         setSize={setSize}
       />
 
-      <Options aspect={aspect} setAspect={setAspect} />
-      <ImageUpload
-        imageUrl={image}
-        crop={crop}
-        size={size}
-        aspect={aspect}
-        zoom={zoom}
-      />
+      <div className="options">
+        <Options aspect={aspect} setAspect={setAspect} />
+
+        <ImageUpload
+          imageUrl={image}
+          crop={crop}
+          size={size}
+          aspect={aspect}
+          zoom={zoom}
+        />
+      </div>
     </div>
   );
 }

@@ -18,7 +18,12 @@ function FileBrowser({ setImage }: Props) {
     setImage(reader.result as string);
   };
 
-  return <input type="file" onChange={handleChange} />;
+  return (
+    <div className="button">
+      New
+      <input className="button-file" type="file" onChange={handleChange} />
+    </div>
+  );
 }
 
 export default FileBrowser;

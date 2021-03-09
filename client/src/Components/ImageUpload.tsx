@@ -71,14 +71,18 @@ function ImageUpload({ imageUrl, aspect, crop, size, zoom }: Props) {
   };
 
   return (
-    <>
+    <div className="options-upload">
       <input
+        className="input"
         type="text"
         onChange={(e) => setName(e.target.value)}
         value={name}
+        placeholder="Image Name"
       />
-      <button onClick={handleClick}>Upload</button>
-    </>
+      <button className="button" onClick={handleClick}>
+        Upload
+      </button>
+    </div>
   );
 }
 
