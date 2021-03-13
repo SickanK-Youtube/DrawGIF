@@ -18,7 +18,6 @@ public class RouteHandler {
     public void HandleOptions(){
         Spark.options("/*",
                 (request, response) -> {
-
                     String accessControlRequestHeaders = request
                             .headers("Access-Control-Request-Headers");
                     if (accessControlRequestHeaders != null) {

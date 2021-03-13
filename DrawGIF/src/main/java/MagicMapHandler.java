@@ -52,6 +52,7 @@ public class MagicMapHandler implements Listener {
             meta.setDisplayName(imageInfo.name);
             m.setItemMeta(meta);
             this.map = m;
+            player.getInventory().removeItem(m);
             player.getInventory().addItem(m);
         }
 
@@ -75,8 +76,9 @@ public class MagicMapHandler implements Listener {
     }
 
     private void placeMaps(BlockFace blockFace, Player player, Location initialLocation) {
-        ArrayList<GifMapRenderer> gifMapRenderers = new ArrayList<>();
         Map<String, PlacedFrame> frames = new HashMap<>();
+        ArrayList<GifMapRenderer> gifMapRenderers = new ArrayList<>();
+
         for (MapPiece map : this.maps) {
             BlockFace heightDirection = getHeightDirection(blockFace, player);
             BlockFace widthDirection = getWidthDirection(blockFace, player);
@@ -153,6 +155,46 @@ public class MagicMapHandler implements Listener {
                         break;
                 }
 
+                double frameX = 0;
+                double frameY = 0;
+                double frameZ = 0;
+
+                switch (blockFace) {
+                    case NORTH:
+                        frameX = 0.5;
+                        frameY = 0.5;
+                        frameZ = 0.96875;
+                        break;
+                    case SOUTH:
+                        frameX = 0.5;
+                        frameY = 0.5;
+                        frameZ = 0.03125;
+                        break;
+                    case WEST:
+                        frameX = 0.96875;
+                        frameY = 0.5;
+                        frameZ = 0.5;
+                        break;
+                    case EAST:
+                        frameX = 0.03125;
+                        frameY = 0.5;
+                        frameZ = 0.5;
+                        break;
+                    case UP:
+                        frameX = 0.5;
+                        frameY = 0.03125;
+                        frameZ = 0.5;
+                        break;
+                    case DOWN:
+                        frameX = 0.5;
+                        frameY = 0.96875;
+                        frameZ = 0.5;
+                        break;
+                    default:
+                        break;
+                }
+
+
                 newLocation.add(x, y, z);
                 try {
                     ItemFrame frame = player.getWorld().spawn(
@@ -160,7 +202,8 @@ public class MagicMapHandler implements Listener {
                     frame.setFacingDirection(blockFace);
                     frame.setRotation(facingToRotation(heightDirection, widthDirection));
 
-                    frames.put(imageInfo.id + "_" + Math.round(newLocation.getX()) + Math.round(newLocation.getY()) + Math.round(newLocation.getZ()), new PlacedFrame(imageInfo.id, map.filename, newLocation.getX(), newLocation.getY(), newLocation.getZ()));
+                    frames.put(imageInfo.id + "_" + Math.round(newLocation.getX()) + Math.round(newLocation.getY()) + Math.round(newLocation.getZ()), new PlacedFrame(imageInfo.id, map.filename, newLocation.getX() + frameX, newLocation.getY() + frameY, newLocation.getZ() + frameZ));
+
 
                     if (imageInfo.type.equals("GIF")) {
                         gifMapRenderers.add(new GifMapRenderer(frame, imageInfo.id, map.x, map.y));
@@ -175,26 +218,7 @@ public class MagicMapHandler implements Listener {
                 } catch (IllegalArgumentException e) {
                 }
             }
-
-            ConfigurationSection frameSection = config.getConfigurationSection("frames");
-            if (frameSection != null) {
-                Map<String, Object> existingFrames = frameSection.getValues(false);
-
-                existingFrames.forEach((name, placedFrame) -> {
-                    frames.put(name, (PlacedFrame) placedFrame);
-                });
-
-                config.set("frames", frames);
-            }
-
-            try {
-                config.save(new File(DrawGIF.DATA_FOLDER, DrawGIF.MAPS_YML));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
         }
-
 
         if (imageInfo.type.equals("GIF")) {
             new BukkitRunnable() {
@@ -203,7 +227,30 @@ public class MagicMapHandler implements Listener {
                     new GifMapHandler(gifMapRenderers.toArray(new GifMapRenderer[0]), 60);
                 }
             }.runTaskAsynchronously(DrawGIF.getPlugin(DrawGIF.class));
+
+            YamlConfiguration newConfig = YamlConfiguration.loadConfiguration(new File(DrawGIF.DATA_FOLDER + DrawGIF.MAPS_YML));
+            ConfigurationSection frameSection = newConfig.getConfigurationSection("frames");
+
+            if (frameSection != null) {
+                Map<String, PlacedFrame> f = new HashMap<>();
+                Map<String, Object> existingFrames = frameSection.getValues(false);
+
+                existingFrames.forEach((name, placedFrame) -> {
+                    f.put(name, (PlacedFrame) placedFrame);
+                });
+                frames.forEach(f::put);
+
+                newConfig.set("frames", f);
+            }
+
+
+            try {
+                newConfig.save(new File(DrawGIF.DATA_FOLDER, DrawGIF.MAPS_YML));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+
     }
 
     @EventHandler

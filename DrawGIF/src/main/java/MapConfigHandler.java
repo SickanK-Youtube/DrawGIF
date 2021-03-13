@@ -86,6 +86,23 @@ public class MapConfigHandler {
         return frames.toArray(new PlacedFrame[0]);
     }
 
+    public Map<String, PlacedFrame> getAllPlacedFramesWithKeys() {
+        ConfigurationSection frameSection = this.config.getConfigurationSection("frames");
+        System.out.println(frameSection);
+
+        if (frameSection == null) {
+            return null;
+        }
+
+        Map<String, PlacedFrame> frames = new HashMap<>();
+
+        for(String key : frameSection.getKeys(false)){
+            frames.put(key, (PlacedFrame) frameSection.get(key));
+        };
+
+        return frames;
+    }
+
     public HashMap[] getReference(String name) {
         ConfigurationSection referenceSection = config.getConfigurationSection("reference");
         if (referenceSection == null || name == null) {

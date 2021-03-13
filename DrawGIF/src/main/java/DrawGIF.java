@@ -3,6 +3,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.entity.Entity;
@@ -48,47 +49,8 @@ public class DrawGIF extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        MapConfigHandler configHandler = new MapConfigHandler(new File(DrawGIF.DATA_FOLDER, DrawGIF.MAPS_YML));
-
         if (!gifsLoaded) {
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    PlacedFrame[] frames = configHandler.getAllPlacedFrames();
-                    Map<String, ArrayList<GifMapRenderer>> gifRenderers = new HashMap<>();
-                    if (frames != null) {
-                        for (PlacedFrame frame : frames) {
-                            ItemFrame itemFrame = locateItemFrame(new Location(event.getPlayer().getWorld(), frame.x, frame.y, frame.z));
-
-                            if (itemFrame != null) {
-                                if (!gifRenderers.containsKey(frame.id)) {
-                                    gifRenderers.put(frame.id, new ArrayList<>());
-                                }
-
-                                String xy = frame.filename.split("_")[1];
-                                int x = Integer.parseInt(xy.split("")[0]);
-                                int y = Integer.parseInt(xy.split("")[1]);
-
-                                ArrayList<GifMapRenderer> gifMapRendererList = gifRenderers.get(frame.id);
-                                gifMapRendererList.add(new GifMapRenderer(itemFrame, frame.id, x, y));
-                                gifRenderers.put(frame.id, gifMapRendererList);
-
-                            } else {
-                                // Clean Up
-                            }
-                        }
-
-                        for (String key : gifRenderers.keySet()) {
-                            new BukkitRunnable() {
-                                @Override
-                                public void run() {
-                                    new GifMapHandler(gifRenderers.get(key).toArray(new GifMapRenderer[0]), 60);
-                                }
-                            }.runTaskAsynchronously(DrawGIF.getPlugin(DrawGIF.class));
-                        }
-                    }
-                }
-            }.runTask(this);
+            new GifLoaderTask(event).runTask(this);
             this.gifsLoaded = true;
         }
     }
@@ -187,17 +149,6 @@ public class DrawGIF extends JavaPlugin implements Listener {
             }
         }
         return false;
-    }
-
-    public ItemFrame locateItemFrame(Location location) {
-        Collection<Entity> nearbyEntities = location.getWorld().getNearbyEntities(location, 0.5, 0.5, 0.5);
-        for (Entity entity : nearbyEntities) {
-            if (entity instanceof ItemFrame) {
-                return (ItemFrame) entity;
-            }
-        }
-
-        return null;
     }
 }
 
